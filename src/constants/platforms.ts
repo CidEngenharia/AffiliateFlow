@@ -1,0 +1,67 @@
+import { 
+  Github, 
+  Globe, 
+  Youtube, 
+  Search, 
+  FileText, 
+  Linkedin, 
+  Twitter, 
+  Send, 
+  Layout, 
+  Archive, 
+  Hash, 
+  Database, 
+  Box, 
+  Figma, 
+  BookOpen, 
+  Library,
+  MessageSquare
+} from 'lucide-react';
+
+export const SEARCH_PLATFORMS = [
+  { id: 'google', name: 'Google', url: 'https://www.google.com/search?q=', icon: Globe, color: '#4285F4' },
+  { id: 'github', name: 'GitHub', url: 'https://github.com/search?q=', icon: Github, color: '#333' },
+  { id: 'reddit', name: 'Reddit', url: 'https://www.reddit.com/search/?q=', icon: MessageSquare, color: '#FF4500' },
+  { id: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q=', icon: Search, color: '#00A4EF' },
+  { id: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=', icon: Search, color: '#DE5833' },
+  { id: 'drive', name: 'Google Drive', url: 'https://drive.google.com/drive/search?q=', icon: Database, color: '#34A853' },
+  { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/results?search_query=', icon: Youtube, color: '#FF0000' },
+  { id: 'stackoverflow', name: 'StackOverflow', url: 'https://stackoverflow.com/search?q=', icon: MessageSquare, color: '#F48024' },
+  { id: 'medium', name: 'Medium', url: 'https://medium.com/search?q=', icon: BookOpen, color: '#000000' },
+  { id: 'linkedin', name: 'LinkedIn', url: 'https://www.linkedin.com/search/results/all/?keywords=', icon: Linkedin, color: '#0A66C2' },
+  { id: 'twitter', name: 'X/Twitter', url: 'https://twitter.com/search?q=', icon: Twitter, color: '#1DA1F2' },
+  { id: 'telegram', name: 'Telegram', url: 'https://t.me/s/all?q=', icon: Send, color: '#0088CC' },
+  { id: 'notion', name: 'Notion', url: 'https://www.notion.so/search?q=', icon: Layout, color: '#000000' },
+  { id: 'archive', name: 'Archive.org', url: 'https://archive.org/search.php?query=', icon: Archive, color: '#000000' },
+  { id: 'hackernews', name: 'Hacker News', url: 'https://hn.algolia.com/?q=', icon: Hash, color: '#FF6600' },
+  { id: 'kaggle', name: 'Kaggle', url: 'https://www.kaggle.com/search?q=', icon: Database, color: '#20BEFF' },
+  { id: 'devto', name: 'Dev.to', url: 'https://dev.to/search?q=', icon: BookOpen, color: '#0A0A0A' },
+  { id: 'npm', name: 'NPM', url: 'https://www.npmjs.com/search?q=', icon: Box, color: '#CB3837' },
+  { id: 'docker', name: 'Docker Hub', url: 'https://hub.docker.com/search?q=', icon: Box, color: '#2496ED' },
+  { id: 'figma', name: 'Figma Community', url: 'https://www.figma.com/community/search?model=files&q=', icon: Figma, color: '#F24E1E' },
+];
+
+export const QUICK_SHORTCUTS = [
+  { name: 'PDFs Públicos', query: 'filetype:pdf', icon: FileText },
+  { name: 'Planilhas', query: 'filetype:xlsx OR filetype:csv', icon: FileText },
+  { name: 'APIs', query: 'inurl:api', icon: Database },
+  { name: 'Dashboards', query: 'intitle:dashboard', icon: Layout },
+  { name: 'Repositórios', query: 'site:github.com', icon: Github },
+  { name: 'Cursos', query: 'filetype:pdf curso', icon: BookOpen },
+  { name: 'Planos de negócio', query: 'filetype:pdf "plano de negócio"', icon: FileText },
+  { name: 'IA Prompts', query: 'site:github.com prompt engineering', icon: MessageSquare },
+  { name: 'Templates', query: 'intitle:template', icon: Layout },
+  { name: 'SaaS Ideias', query: 'intitle:"saas idea"', icon: Globe },
+];
+
+export const ADVANCED_OPERATORS = [
+  { operator: 'site:', description: 'pesquisar domínio' },
+  { operator: 'filetype:', description: 'tipo de arquivo' },
+  { operator: 'intitle:', description: 'buscar no título' },
+  { operator: 'inurl:', description: 'buscar URL' },
+  { operator: 'OR', description: 'alternativa' },
+  { operator: '""', description: 'busca exata' },
+  { operator: '-', description: 'excluir termo' },
+  { operator: 'before:', description: 'antes de data' },
+  { operator: 'after:', description: 'depois de data' },
+];
