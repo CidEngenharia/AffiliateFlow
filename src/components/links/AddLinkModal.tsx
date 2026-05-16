@@ -93,267 +93,181 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
       />
       
       <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative w-full max-w-lg z-10"
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="relative w-full max-w-2xl z-10"
       >
-        <Card className="!p-0 border-white/10 overflow-hidden shadow-2xl">
-          <div className="p-6 border-b border-border flex items-center justify-between bg-muted/30">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <LinkIcon className="text-primary w-5 h-5" />
-              Novo Link de Afiliado
-            </h3>
-            <button onClick={onClose} className="p-2 hover:bg-accent rounded-lg transition-colors">
-              <X size={20} />
-            </button>
-          </div>
-
-          <form className="p-6 space-y-5" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold ml-1">Título da Campanha</label>
-              <input 
-                required
-                disabled={isSubmitting}
-                type="text" 
-                placeholder="Ex: Promoção iPhone 15 Pro Max" 
-                className="w-full bg-muted/50 border border-border rounded-xl h-11 px-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50"
-                value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold ml-1">Link Original (Afiliado)</label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input 
-                  required
-                  disabled={isSubmitting}
-                  type="url" 
-                  placeholder="https://hotmart.com/..." 
-                  className="w-full bg-muted/50 border border-border rounded-xl h-11 pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50"
-                  value={formData.original_url}
-                  onChange={(e) => setFormData({...formData, original_url: e.target.value})}
-                />
+        <Card className="!p-0 border-primary/20 overflow-hidden shadow-2xl bg-slate-950">
+          <div className="flex flex-col md:flex-row min-h-[500px]">
+            {/* Sidebar de Descrição */}
+            <div className="w-full md:w-1/3 bg-slate-900/50 p-6 border-b md:border-b-0 md:border-r border-white/5 flex flex-col gap-6">
+              <div className="space-y-4">
+                <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center">
+                  <LinkIcon className="text-blue-500 w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-xl tracking-tight text-white">AfiliateFlow IA</h3>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Transforme links longos em URLs elegantes e rastreáveis. 
+                  Sempre preserve compatibilidade. © 2026 AfiliateFlow IA
+                </p>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold ml-1 flex items-center justify-between">
-                URL da Imagem do Produto
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Opcional</span>
-              </label>
-              <div className="relative">
-                <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input 
-                  disabled={isSubmitting}
-                  type="url" 
-                  placeholder="https://exemplo.com/foto.jpg" 
-                  className="w-full bg-muted/50 border border-border rounded-xl h-11 pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50"
-                  value={formData.thumbnail_url}
-                  onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold ml-1">Código Curto</label>
-                <input 
-                  disabled={isSubmitting}
-                  type="text" 
-                  placeholder="Ex: iphone15-promo" 
-                  className="w-full bg-muted/50 border border-border rounded-xl h-11 px-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50"
-                  value={formData.short_code}
-                  onChange={(e) => setFormData({...formData, short_code: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold ml-1">Categoria</label>
-                <div className="relative">
-                  <select 
-                    disabled={isSubmitting || isLoadingCategories}
-                    className="w-full bg-muted/50 border border-border rounded-xl h-11 px-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all appearance-none disabled:opacity-50"
-                    value={formData.category_id}
-                    onChange={(e) => setFormData({...formData, category_id: e.target.value})}
-                  >
-                    <option value="">Sem Categoria</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                  {isLoadingCategories && (
-                    <div className="absolute right-8 top-1/2 -translate-y-1/2">
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    </div>
-                  )}
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
+              <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-3 h-3 text-emerald-500" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-white block">IA Insights</span>
+                    <p className="text-[9px] text-slate-500">Otimizamos o redirecionamento para 301 por padrão.</p>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold ml-1">Preço Original (R$)</label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+
+            {/* Formulário */}
+            <div className="flex-1 overflow-y-auto max-h-[80vh] scrollbar-hide">
+              <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-slate-950/80 backdrop-blur-md z-10">
+                <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-slate-400">AfiliateFlow IA</span>
+                <button onClick={onClose} className="p-1.5 hover:bg-white/5 rounded-lg transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form className="p-6 space-y-6" onSubmit={handleSubmit}>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Título</label>
                   <input 
+                    required
                     disabled={isSubmitting}
-                    type="number" 
-                    step="0.01"
-                    placeholder="0,00" 
-                    className="w-full bg-muted/50 border border-border rounded-xl h-11 pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50"
-                    value={formData.original_price}
-                    onChange={(e) => setFormData({...formData, original_price: e.target.value})}
+                    type="text" 
+                    placeholder="Ex: Promoção iPhone 15 Pro Max" 
+                    className="w-full bg-white/5 border border-white/10 rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all disabled:opacity-50 text-white"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold ml-1 text-primary">Preço de Oferta (R$)</label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
-                  <input 
-                    disabled={isSubmitting}
-                    type="number" 
-                    step="0.01"
-                    placeholder="0,00" 
-                    className="w-full bg-primary/5 border border-primary/20 rounded-xl h-11 pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50"
-                    value={formData.sale_price}
-                    onChange={(e) => setFormData({...formData, sale_price: e.target.value})}
-                  />
-                </div>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold ml-1">Expira em</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input 
-                    disabled={isSubmitting}
-                    type="date" 
-                    className="w-full bg-muted/50 border border-border rounded-xl h-11 pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50"
-                    value={formData.expires_at}
-                    onChange={(e) => setFormData({...formData, expires_at: e.target.value})}
-                  />
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Link de Afiliado</label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
+                    <input 
+                      required
+                      disabled={isSubmitting}
+                      type="url" 
+                      placeholder="https://hotmart.com/..." 
+                      className="w-full bg-white/5 border border-white/10 rounded-lg h-9 pl-9 pr-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all disabled:opacity-50 text-white"
+                      value={formData.original_url}
+                      onChange={(e) => setFormData({...formData, original_url: e.target.value})}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold ml-1">Redirecionamento</label>
-                <div className="relative">
-                  <ArrowRightLeft className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <select 
-                    disabled={isSubmitting}
-                    className="w-full bg-muted/50 border border-border rounded-xl h-11 pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all appearance-none disabled:opacity-50"
-                    value={formData.redirect_type}
-                    onChange={(e) => setFormData({...formData, redirect_type: e.target.value})}
-                  >
-                    <option value="301">301 (Permanente)</option>
-                    <option value="307">307 (Temporário)</option>
-                  </select>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Código Curto</label>
+                    <input 
+                      disabled={isSubmitting}
+                      type="text" 
+                      placeholder="iphone15-promo" 
+                      className="w-full bg-white/5 border border-white/10 rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all disabled:opacity-50 text-white"
+                      value={formData.short_code}
+                      onChange={(e) => setFormData({...formData, short_code: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Categoria</label>
+                    <select 
+                      disabled={isSubmitting || isLoadingCategories}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all appearance-none disabled:opacity-50 text-white"
+                      value={formData.category_id}
+                      onChange={(e) => setFormData({...formData, category_id: e.target.value})}
+                    >
+                      <option value="" className="bg-slate-900">Sem Categoria</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id} className="bg-slate-900">{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="flex gap-6 px-1">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <div className="relative flex items-center justify-center">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer"
-                    checked={formData.is_nofollow}
-                    onChange={(e) => setFormData({...formData, is_nofollow: e.target.checked})}
-                  />
-                  <div className="w-5 h-5 border-2 border-border rounded-md bg-muted/50 peer-checked:bg-primary peer-checked:border-primary transition-all"></div>
-                  <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                  </svg>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Preço Original</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
+                      <input 
+                        disabled={isSubmitting}
+                        type="number" 
+                        step="0.01"
+                        placeholder="0,00" 
+                        className="w-full bg-white/5 border border-white/10 rounded-lg h-9 pl-9 pr-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all text-white"
+                        value={formData.original_price}
+                        onChange={(e) => setFormData({...formData, original_price: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-blue-400 uppercase tracking-wider ml-1">Oferta</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-blue-400" />
+                      <input 
+                        disabled={isSubmitting}
+                        type="number" 
+                        step="0.01"
+                        placeholder="0,00" 
+                        className="w-full bg-blue-500/5 border border-blue-500/20 rounded-lg h-9 pl-9 pr-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all text-white"
+                        value={formData.sale_price}
+                        onChange={(e) => setFormData({...formData, sale_price: e.target.value})}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">Rel="nofollow"</span>
-              </label>
 
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <div className="relative flex items-center justify-center">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer"
-                    checked={formData.is_sponsored}
-                    onChange={(e) => setFormData({...formData, is_sponsored: e.target.checked})}
-                  />
-                  <div className="w-5 h-5 border-2 border-border rounded-md bg-muted/50 peer-checked:bg-primary peer-checked:border-primary transition-all"></div>
-                  <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                  </svg>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Plataforma</label>
+                    <select 
+                      disabled={isSubmitting}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg h-9 px-3 text-xs text-white"
+                      value={formData.platform}
+                      onChange={(e) => setFormData({...formData, platform: e.target.value})}
+                    >
+                      <option value="" className="bg-slate-900">Selecione...</option>
+                      {['Shopee', 'Magalu', 'Amazon', 'Hotmart', 'Kiwify'].map(p => (
+                        <option key={p} value={p} className="bg-slate-900">{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">SEO Tagging</label>
+                    <div className="flex items-center gap-3 h-9">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" checked={formData.is_nofollow} onChange={e => setFormData({...formData, is_nofollow: e.target.checked})} className="w-3 h-3 rounded border-white/10 bg-white/5 text-blue-600 focus:ring-0" />
+                        <span className="font-bold text-lg">AfiliateFlow IA</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" checked={formData.is_sponsored} onChange={e => setFormData({...formData, is_sponsored: e.target.checked})} className="w-3 h-3 rounded border-white/10 bg-white/5 text-blue-600 focus:ring-0" />
+                        <span className="text-[10px] text-slate-400">Sponsored</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">Rel="sponsored"</span>
-              </label>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold ml-1 text-primary">Plataforma</label>
-              <div className="relative">
-                <select 
-                  disabled={isSubmitting}
-                  className="w-full bg-primary/5 border border-primary/20 rounded-xl h-11 px-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all appearance-none disabled:opacity-50"
-                  value={formData.platform}
-                  onChange={(e) => setFormData({...formData, platform: e.target.value})}
-                >
-                  <option value="">Outras Plataformas</option>
-                  <option value="Shopee">Shopee</option>
-                  <option value="Magalu">Magalu</option>
-                  <option value="Amazon">Amazon</option>
-                  <option value="Hotmart">Hotmart</option>
-                  <option value="Kiwify">Kiwify</option>
-                  <option value="Braip">Braip</option>
-                  <option value="Eduzz">Eduzz</option>
-                  <option value="Mercado Livre">Mercado Livre</option>
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
+                <div className="pt-4 flex gap-3 sticky bottom-0 bg-slate-950 p-2 -mx-2">
+                  <Button type="button" variant="outline" size="sm" className="flex-1 rounded-lg border-white/10 text-xs" onClick={onClose} disabled={isSubmitting}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" variant="primary" size="sm" className="flex-1 rounded-lg text-xs font-bold" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-2" />}
+                    {isSubmitting ? 'Salvando...' : 'Confirmar Link'}
+                  </Button>
                 </div>
-              </div>
+              </form>
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold ml-1 flex items-center justify-between">
-                Tags (Separadas por vírgula)
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Opcional</span>
-              </label>
-              <div className="relative">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input 
-                  disabled={isSubmitting}
-                  type="text" 
-                  placeholder="Ex: promoção, apple, 2026" 
-                  className="w-full bg-muted/50 border border-border rounded-xl h-11 pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50"
-                  value={formData.tags}
-                  onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 flex gap-3">
-              <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={isSubmitting}>
-                Cancelar
-              </Button>
-              <Button type="submit" variant="primary" className="flex-1 group" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4 mr-2 group-hover:animate-pulse" />
-                )}
-                {isSubmitting ? 'Criando...' : 'Criar Link'}
-              </Button>
-            </div>
-          </form>
+          </div>
         </Card>
       </motion.div>
     </div>

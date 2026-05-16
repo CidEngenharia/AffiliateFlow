@@ -49,20 +49,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+  const fetchProfile = async (userId: string, retries = 3) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
-      console.error('Erro ao buscar perfil:', error.message);
-      return;
-    }
+      if (error) {
+        if (retries > 0) {
+          console.log(`Tentativa de buscar perfil falhou, tentando novamente em 1s... (${retries} restantes)`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return fetchProfile(userId, retries - 1);
+        }
+        console.error('Erro ao buscar perfil após tentativas:', error.message);
+        return;
+      }
 
-    if (data) {
-      setProfile(data as Profile);
+      if (data) {
+        setProfile(data as Profile);
+      }
+    } catch (err) {
+      console.error('Exceção ao buscar perfil:', err);
     }
   };
 

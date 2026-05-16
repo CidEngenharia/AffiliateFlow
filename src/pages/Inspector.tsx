@@ -164,7 +164,7 @@ const Inspector: React.FC = () => {
       {/* Busca Principal - Glassmorphism */}
       <motion.div 
         layout
-        className="bg-card/30 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden group"
+        className="bg-card/30 backdrop-blur-xl border border-primary/20 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden group"
       >
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-primary/20 transition-all duration-700" />
         
@@ -245,7 +245,7 @@ const Inspector: React.FC = () => {
           >
             {/* Coluna 1: Overview & Score */}
             <div className="lg:col-span-4 space-y-8">
-              <div className="bg-card/50 backdrop-blur-xl border border-border p-8 rounded-[2.5rem] flex flex-col items-center">
+              <div className="bg-card/50 backdrop-blur-xl border border-primary/20 p-8 rounded-[2.5rem] flex flex-col items-center">
                 <ScoreRing score={result.riskScore} />
                 <div className="mt-8 text-center space-y-2">
                   <h3 className="text-2xl font-bold uppercase tracking-tight">
@@ -259,7 +259,7 @@ const Inspector: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-card/50 backdrop-blur-xl border border-border p-6 rounded-[2rem] space-y-4">
+              <div className="bg-card/50 backdrop-blur-xl border border-primary/20 p-6 rounded-[2rem] space-y-4">
                 <div className="flex items-center space-x-2 font-bold mb-2">
                   <Cpu className="w-5 h-5 text-primary" />
                   <span>AI Insight</span>
@@ -274,7 +274,7 @@ const Inspector: React.FC = () => {
             <div className="lg:col-span-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* SSL Info */}
-                <div className="bg-card/50 backdrop-blur-xl border border-border p-6 rounded-3xl group hover:border-primary/50 transition-colors">
+                <div className="bg-card/50 backdrop-blur-xl border border-primary/20 p-6 rounded-3xl group hover:border-primary/50 transition-colors">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
                       <Lock className="w-5 h-5 text-green-500" />
@@ -290,7 +290,7 @@ const Inspector: React.FC = () => {
                 </div>
 
                 {/* WHOIS Info */}
-                <div className="bg-card/50 backdrop-blur-xl border border-border p-6 rounded-3xl group hover:border-primary/50 transition-colors">
+                <div className="bg-card/50 backdrop-blur-xl border border-primary/20 p-6 rounded-3xl group hover:border-primary/50 transition-colors">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
                       <Globe className="w-5 h-5 text-blue-500" />
@@ -306,7 +306,7 @@ const Inspector: React.FC = () => {
                 </div>
 
                 {/* Reputation */}
-                <div className="bg-card/50 backdrop-blur-xl border border-border p-6 rounded-3xl group hover:border-primary/50 transition-colors">
+                <div className="bg-card/50 backdrop-blur-xl border border-primary/20 p-6 rounded-3xl group hover:border-primary/50 transition-colors">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
                       <ShieldAlert className="w-5 h-5 text-red-500" />
@@ -323,7 +323,7 @@ const Inspector: React.FC = () => {
                 </div>
 
                 {/* Sandbox Preview */}
-                <div className="bg-card/50 backdrop-blur-xl border border-border p-6 rounded-3xl group hover:border-primary/50 transition-colors">
+                <div className="bg-card/50 backdrop-blur-xl border border-primary/20 p-6 rounded-3xl group hover:border-primary/50 transition-colors">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
                       <Monitor className="w-5 h-5 text-primary" />

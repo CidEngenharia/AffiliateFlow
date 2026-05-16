@@ -10,11 +10,25 @@ import {
   AlertTriangle,
   Users,
   Smartphone,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { automationService, AutomationPayload } from '../services/automationService';
+import { automationService } from '../services/automationService';
+
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.438 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+  </svg>
+);
+
+const TelegramIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white translate-x-[-1px]">
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.506 1.201-.827 1.23-.698.064-1.226-.463-1.903-.907-1.06-.694-1.66-1.125-2.684-1.799-1.184-.779-.418-1.207.258-1.907.177-.184 3.247-2.977 3.307-3.233.007-.032.014-.15-.056-.212-.07-.062-.173-.041-.248-.024-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.008-1.252-.241-1.865-.44-.751-.244-1.348-.374-1.296-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.121.1.156.233.17.327.014.095.021.28.01.405z" />
+  </svg>
+);
 
 const Campaigns: React.FC = () => {
   const [platform, setPlatform] = useState<'whatsapp' | 'telegram'>('whatsapp');
@@ -79,31 +93,50 @@ const Campaigns: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Editor de Mensagem */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="p-6">
+          <Card className="p-6 border-primary/20">
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setPlatform('whatsapp')}
-                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 relative overflow-hidden ${
                     platform === 'whatsapp' 
-                    ? 'border-success bg-success/5 text-success' 
-                    : 'border-border hover:border-success/30'
+                    ? 'border-emerald-500 bg-emerald-500/5 shadow-lg shadow-emerald-500/10' 
+                    : 'border-border hover:border-emerald-500/20'
                   }`}
                 >
-                  <Smartphone className="w-8 h-8" />
-                  <span className="font-bold">WhatsApp</span>
-                </button>
-                <button
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${
+                    platform === 'whatsapp' ? 'bg-emerald-500 scale-110 shadow-lg' : 'bg-muted scale-100'
+                  }`}>
+                    <WhatsAppIcon />
+                  </div>
+                  <span className={`font-bold transition-colors ${platform === 'whatsapp' ? 'text-emerald-500' : 'text-muted-foreground'}`}>WhatsApp</span>
+                  {platform === 'whatsapp' && (
+                    <motion.div layoutId="active-platform" className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500" />
+                  )}
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setPlatform('telegram')}
-                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 relative overflow-hidden ${
                     platform === 'telegram' 
-                    ? 'border-info bg-info/5 text-info' 
-                    : 'border-border hover:border-info/30'
+                    ? 'border-sky-500 bg-sky-500/5 shadow-lg shadow-sky-500/10' 
+                    : 'border-border hover:border-sky-500/20'
                   }`}
                 >
-                  <SendHorizontal className="w-8 h-8" />
-                  <span className="font-bold">Telegram</span>
-                </button>
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${
+                    platform === 'telegram' ? 'bg-sky-500 scale-110 shadow-lg' : 'bg-muted scale-100'
+                  }`}>
+                    <TelegramIcon />
+                  </div>
+                  <span className={`font-bold transition-colors ${platform === 'telegram' ? 'text-sky-500' : 'text-muted-foreground'}`}>Telegram</span>
+                  {platform === 'telegram' && (
+                    <motion.div layoutId="active-platform" className="absolute top-2 right-2 w-2 h-2 rounded-full bg-sky-500" />
+                  )}
+                </motion.button>
               </div>
 
               <div className="space-y-4">
@@ -147,12 +180,44 @@ const Campaigns: React.FC = () => {
 
               <Button 
                 variant="primary" 
-                className="w-full py-6 text-lg"
+                className="w-full py-8 text-xl font-black tracking-widest uppercase relative overflow-hidden group"
                 onClick={handleSend}
-                disabled={isSending}
+                disabled={isSending || (status?.type === 'success')}
               >
-                {isSending ? 'Processando...' : `Disparar para ${platform === 'whatsapp' ? 'WhatsApp' : 'Telegram'}`}
-                {!isSending && <Send className="w-5 h-5 ml-2" />}
+                <AnimatePresence mode="wait">
+                  {isSending ? (
+                    <motion.div 
+                      key="loading"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex items-center gap-3"
+                    >
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      PROCESSANDO...
+                    </motion.div>
+                  ) : status?.type === 'success' ? (
+                    <motion.div 
+                      key="success"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex items-center gap-3 text-white"
+                    >
+                      <CheckCircle2 className="w-7 h-7" />
+                      ENVIADO COM SUCESSO!
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="idle"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-3"
+                    >
+                      DISPARAR PARA {platform === 'whatsapp' ? 'WHATSAPP' : 'TELEGRAM'}
+                      <Send className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </Button>
             </div>
           </Card>
@@ -160,7 +225,7 @@ const Campaigns: React.FC = () => {
 
         {/* Sidebar: Status e Histórico */}
         <div className="space-y-6">
-          <Card title="Status do n8n" className="bg-muted/30">
+          <Card title="Status do n8n" className="bg-muted/30 border-primary/20">
             <div className="flex items-center justify-between p-2">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse" />
@@ -170,7 +235,7 @@ const Campaigns: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="p-0 overflow-hidden">
+          <Card className="p-0 overflow-hidden border-primary/20">
             <div className="p-4 border-b border-border bg-muted/20 flex items-center gap-2">
               <History className="w-4 h-4 text-primary" />
               <h3 className="font-bold text-sm">Histórico Recente</h3>

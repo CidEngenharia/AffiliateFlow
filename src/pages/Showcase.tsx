@@ -77,13 +77,13 @@ const Showcase: React.FC = () => {
   }, [username]);
 
   const handleShareShowcase = () => {
-    const text = `Confira minha vitrine de ofertas no Affilehub! 🚀\n\n${window.location.href}`;
+    const text = `Confira minha vitrine de ofertas no AfiliateFlow IA! 🚀\n\n${window.location.href}`;
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
   };
 
   const handleShareProduct = (link: Link) => {
-    const text = `🔥 *OFERTA IMPERDÍVEL!* 🔥\n\n*${link.title}*\n\n🛒 Compre agora: ${window.location.origin}/go/${link.short_code}\n\nVia Affilehub ⚡`;
+    const text = `🔥 *OFERTA IMPERDÍVEL!* 🔥\n\n*${link.title}*\n\n🛒 Compre agora: ${window.location.origin}/go/${link.short_code}\n\nVia AfiliateFlow IA ⚡`;
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -161,7 +161,7 @@ const Showcase: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#FDFDFD] dark:bg-[#0A0A0A] pb-24 selection:bg-primary/20">
       <Helmet>
-        <title>{profile.full_name || 'Afiliado'} | Vitrine de Ofertas Affilehub</title>
+        <title>{profile.full_name || 'Afiliado'} | Vitrine de Ofertas AfiliateFlow IA</title>
         <meta name="description" content={`Confira as melhores ofertas e produtos selecionados por ${profile.full_name || 'nosso parceiro'}.`} />
         {profile.avatar_url && <meta property="og:image" content={profile.avatar_url} />}
       </Helmet>
@@ -415,19 +415,25 @@ const Showcase: React.FC = () => {
       <footer className="mt-20 py-16 border-t border-border/30 text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-b from-transparent to-primary/5 opacity-30" />
         <div className="relative z-10">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-              <Zap className="text-white w-5 h-5 fill-white" />
+          <div className="flex flex-col items-center justify-center gap-6">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                <Zap className="text-white w-5 h-5 fill-white" />
+              </div>
+              <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-linear-to-r from-foreground to-muted-foreground">
+                AfiliateFlow IA
+              </span>
             </div>
-            <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-linear-to-r from-foreground to-muted-foreground">Affilehub</span>
-          </div>
-          <p className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.3em] mb-4">
-            Crie sua própria vitrine gratuita em <span className="text-primary hover:underline cursor-pointer">affilehub.com</span>
-          </p>
-          <div className="max-w-xs mx-auto p-3 rounded-xl bg-green-500/5 border border-green-500/10">
-            <p className="text-[9px] text-green-500/60 font-bold uppercase tracking-widest">
-              Ambiente Seguro & Verificado
+            
+            <p className="text-xs text-muted-foreground">
+              Crie sua própria vitrine gratuita em <span className="text-primary hover:underline cursor-pointer">afiliateflow.ia</span>
             </p>
+
+            <div className="max-w-xs mx-auto p-3 rounded-xl bg-green-500/5 border border-green-500/10">
+              <p className="text-[9px] text-green-500/60 font-bold uppercase tracking-widest">
+                Ambiente Seguro & Verificado
+              </p>
+            </div>
           </div>
         </div>
       </footer>

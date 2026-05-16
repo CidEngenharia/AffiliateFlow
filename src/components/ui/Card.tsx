@@ -23,7 +23,7 @@ const Card: React.FC<CardProps> = ({
       whileHover={hoverEffect ? { y: -5, transition: { duration: 0.2 } } : undefined}
       className={`
         relative rounded-2xl overflow-hidden
-        ${isGlass ? 'glass' : 'bg-card border border-border'}
+        ${isGlass ? 'glass' : 'bg-card border border-primary/20'}
         ${hoverEffect ? 'hover:shadow-xl hover:border-primary/20 transition-all duration-300' : ''}
         ${noPadding ? '' : 'p-6'}
         premium-shadow

@@ -32,21 +32,21 @@ const MetricCard: React.FC<{
   <Card hoverEffect>
     <div className="flex items-start justify-between">
       <div className="flex-1">
-        <p className="text-sm text-muted-foreground mb-1">{title}</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{title}</p>
         {isLoading ? (
           <div className="h-8 w-24 bg-muted animate-pulse rounded-md" />
         ) : (
-          <h3 className="text-2xl font-bold">{value}</h3>
+          <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
         )}
         {!isLoading && (
-          <p className={`text-xs mt-2 flex items-center ${Number(trend) >= 0 ? 'text-success' : 'text-danger'}`}>
+          <p className={`text-xs mt-2 flex items-center font-medium ${Number(trend) >= 0 ? 'text-success' : 'text-danger'}`}>
             <TrendingUp className={`w-3 h-3 mr-1 ${Number(trend) < 0 ? 'rotate-180' : ''}`} />
             {Number(trend) > 0 ? `+${trend}` : trend}% este mês
           </p>
         )}
       </div>
-      <div className={`p-3 rounded-xl ${color} bg-opacity-10 text-opacity-100`}>
-        <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
+      <div className="p-2.5 rounded-xl bg-secondary/50 border border-border/40 flex items-center justify-center">
+        <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
       </div>
     </div>
   </Card>
@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
       value: stats?.totalLinks || '0', 
       trend: 5, 
       icon: LinkIcon, 
-      color: 'bg-accent' 
+      color: 'bg-primary' 
     },
     { 
       title: 'Conversões', 

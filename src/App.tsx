@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { HelmetProvider } from 'react-helmet-async';
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import DashboardLayout from './layouts/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import Links from './pages/Links';
@@ -42,6 +43,7 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <AuthProvider>
+        <SpeedInsights />
         <Router>
           <Routes>
             {/* Public Routes */}

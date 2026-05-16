@@ -97,7 +97,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <Zap className="text-white w-5 h-5" />
             </div>
-            <span className="font-bold text-xl tracking-tight">Affilehub</span>
+            <span className="font-bold text-xl tracking-tight">AfiliateFlow IA</span>
           </div>
           {collapsed && <Zap className="text-primary w-8 h-8 mx-auto" />}
           

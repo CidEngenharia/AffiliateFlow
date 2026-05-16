@@ -16,18 +16,20 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = 'inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed';
     
     const variants = {
-      primary: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md',
-      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-      outline: 'border border-border bg-transparent hover:bg-accent text-foreground',
+      primary: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md border border-primary/20',
+      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/50',
+      outline: 'border border-border/50 bg-transparent hover:bg-accent text-foreground hover:border-border',
       ghost: 'bg-transparent hover:bg-accent text-foreground',
       danger: 'bg-danger text-white hover:bg-danger/90',
-      glass: 'glass text-foreground hover:bg-white/10'
+      glass: 'glass text-white hover:bg-white/10 border-white/10 shadow-lg shadow-black/20',
+      premium: 'bg-linear-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 shadow-lg shadow-blue-500/20'
     };
 
     const sizes = {
-      sm: 'h-8 px-3 text-xs',
-      md: 'h-10 px-5 text-sm',
-      lg: 'h-12 px-8 text-base',
+      xs: 'h-7 px-2.5 text-[10px] uppercase tracking-wider font-bold',
+      sm: 'h-9 px-4 text-xs font-medium',
+      md: 'h-11 px-6 text-sm font-medium',
+      lg: 'h-13 px-10 text-base font-semibold',
       icon: 'h-10 w-10'
     };
 

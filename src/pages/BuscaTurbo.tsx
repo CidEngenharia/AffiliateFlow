@@ -208,7 +208,7 @@ const BuscaTurbo: React.FC = () => {
       </div>
 
       {/* Main Search Console */}
-      <Card className="p-1 border-border bg-card/50 backdrop-blur-xl relative overflow-hidden group">
+      <Card className="p-1 border-primary/20 bg-card/50 backdrop-blur-xl relative overflow-hidden group">
         <div className="absolute inset-0 bg-linear-to-br from-white/5 to-transparent opacity-10" />
         
         <div className="relative p-6 space-y-6">
@@ -287,11 +287,12 @@ const BuscaTurbo: React.FC = () => {
             </Button>
             
             <Button 
+              variant="primary"
               size="md"
-              className={`font-bold rounded-xl transition-all duration-300 relative px-8
+              className={`font-bold rounded-xl transition-all duration-300 relative px-8 shadow-lg shadow-primary/20
                 ${isHeavyScanning 
-                  ? 'bg-purple-600/50 text-white' 
-                  : 'bg-[#a78bfa] hover:bg-[#9061f9] text-white shadow-lg shadow-purple-500/20'}
+                  ? 'opacity-70' 
+                  : 'hover:scale-105 active:scale-95'}
               `}
               onClick={handleHeavyScan}
               disabled={isHeavyScanning}
@@ -327,7 +328,7 @@ const BuscaTurbo: React.FC = () => {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <Card className="p-4 border-border bg-muted/5 relative overflow-hidden group mb-8">
+            <Card className="p-4 border-primary/20 bg-muted/5 relative overflow-hidden group mb-8">
               <div className="absolute inset-0 bg-linear-to-r from-muted/10 to-transparent opacity-30" />
               <div className="relative">
                 <div className="flex items-center justify-between mb-6">
@@ -419,7 +420,7 @@ const BuscaTurbo: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <Card className="p-6 border-primary/10 bg-primary/5">
+            <Card className="p-6 border-primary/20 bg-primary/5">
               <div className="flex items-center gap-3 mb-4">
                 <BrainCircuit className="text-primary w-6 h-6" />
                 <h3 className="font-bold text-lg">Sugestões da IA</h3>
@@ -468,7 +469,7 @@ const BuscaTurbo: React.FC = () => {
           <h3 className="text-lg font-bold flex items-center gap-2">
             <Filter className="w-5 h-5 text-primary" /> Operadores OSINT
           </h3>
-          <Card className="p-4 bg-muted/20 border-white/5 space-y-2">
+          <Card className="p-4 bg-muted/20 border-primary/20 space-y-2">
             {ADVANCED_OPERATORS.map((op) => (
               <div 
                 key={op.operator} 
