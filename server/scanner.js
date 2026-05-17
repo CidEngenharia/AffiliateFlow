@@ -1,6 +1,10 @@
 const whoiser = require('whoiser');
 const axios = require('axios');
-const puppeteer = require('puppeteer');
+const { analyzeDNS } = require('./engines/dns');
+const { analyzeASN } = require('./engines/asn');
+const { analyzeTyposquatting } = require('./engines/typosquatting');
+const { executeSandbox } = require('./engines/sandbox');
+const { analyzeVisualHash } = require('./engines/visualai');
 
 /**
  * Motor de Inteligência Link Inspector
@@ -9,34 +13,83 @@ const puppeteer = require('puppeteer');
 const analyze = async (targetUrl) => {
   const url = new URL(targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`);
   const domain = url.hostname;
+  let totalRiskScore = 0;
+  let aiInsights = [];
 
   // Camada 1: WHOIS & Idade do Domínio
   const whoisInfo = await getWhoisData(domain);
+  if (whoisInfo.createdDate && whoisInfo.createdDate.includes('2026')) {
+    totalRiskScore += 30; // Domínio muito recente
+    aiInsights.push('Domínio recém-registrado (possível infraestrutura temporária).');
+  }
 
-  // Camada 2: Reputação (Exemplo integrando com APIs)
+  // Camada 2: Typosquatting (Brand Imitation)
+  const typoResult = analyzeTyposquatting(domain);
+  if (typoResult.is_typosquatting) {
+    totalRiskScore += typoResult.risk_score;
+    aiInsights.push(...typoResult.details);
+  }
+
+  // Camada 3: DNS Intelligence (MX, SPF, DMARC)
+  const dnsIntel = await analyzeDNS(domain);
+  let asnIntel = null;
+  if (dnsIntel.ips.length > 0) {
+    // Camada 4: ASN & IP Reputation (Datacenters, Tor)
+    asnIntel = await analyzeASN(dnsIntel.ips[0]);
+    if (asnIntel && asnIntel.reputation_score > 0) {
+      totalRiskScore += asnIntel.reputation_score;
+      aiInsights.push(`Hospedagem em servidor de alto risco (${asnIntel.is_tor_exit ? 'Rede Tor/Proxy' : 'Datacenter não confiável'}).`);
+    }
+  }
+
+  // Camada 5: Reputação (Blacklists)
   const reputation = await checkReputation(domain);
+  if (reputation.virusTotalHits > 0 || reputation.phishTank) {
+    totalRiskScore += 50;
+    aiInsights.push('Domínio listado em blacklists públicas (PhishTank/VirusTotal).');
+  }
 
-  // Camada 3: Screenshot em Sandbox (Puppeteer)
-  // Nota: Em produção, isso requer um ambiente Linux com dependências de Chrome
-  const screenshot = await captureScreenshot(url.href);
+  // Camada 6: Sandbox & DOM Behavior (Puppeteer Headless)
+  const sandboxResult = await executeSandbox(url.href);
+  if (sandboxResult.risk_score_penalty > 0) {
+    totalRiskScore += sandboxResult.risk_score_penalty;
+    const severities = sandboxResult.dom_flags.map(f => f.description);
+    aiInsights.push(...severities);
+  }
 
-  // Camada 4: Análise de Risco Inteligente (Placeholder para IA)
-  const riskScore = calculateRiskScore({ domain, whoisInfo, reputation });
+  // Camada 7: Visual AI (Perceptual Hashing)
+  const visualIntel = analyzeVisualHash(sandboxResult.screenshot, domain);
+  if (visualIntel.risk_score_penalty > 0) {
+    totalRiskScore += visualIntel.risk_score_penalty;
+    aiInsights.push(visualIntel.details);
+  }
+
+  // Normalizando o Score
+  const finalRiskScore = Math.min(totalRiskScore, 100);
+  const status = finalRiskScore > 70 ? 'malicious' : finalRiskScore > 40 ? 'suspicious' : 'safe';
+
+  if (aiInsights.length === 0) {
+    aiInsights.push('Nenhuma anomalia crítica detectada. Padrões operacionais normais.');
+  }
 
   return {
     url: url.href,
     domain,
-    riskScore,
-    status: riskScore > 70 ? 'malicious' : riskScore > 40 ? 'suspicious' : 'safe',
+    riskScore: finalRiskScore,
+    status,
     details: {
-      ssl: { valid: true, issuer: "GlobalSign", expiry: "2025-12-01" },
+      ssl: { valid: true, issuer: "GlobalSign", expiry: "2026-12-01" }, // Em prd extrairia do DNS/HTTPS via tls.connect
       whois: whoisInfo,
       reputation,
-      dns: { spf: true, dmarc: true },
+      dns: dnsIntel,
+      typosquatting: typoResult,
+      sandbox: sandboxResult,
+      visual: visualIntel,
+      asn: asnIntel
     },
-    screenshot,
-    aiAnalysis: "Análise preditiva detectou comportamentos suspeitos de redirecionamento e domínio recentemente registrado.",
-    notificationsSent: await triggerAutomations(riskScore, domain)
+    screenshot: sandboxResult.screenshot,
+    aiAnalysis: aiInsights.join(' '),
+    notificationsSent: await triggerAutomations(finalRiskScore, domain)
   };
 };
 
