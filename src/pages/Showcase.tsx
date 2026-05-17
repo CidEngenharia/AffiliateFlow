@@ -18,7 +18,7 @@ import {
   ArrowLeft,
   Search
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Helmet } from 'react-helmet-async';
@@ -34,6 +34,7 @@ const Showcase: React.FC = () => {
   const [links, setLinks] = useState<Link[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLink, setSelectedLink] = useState<Link | null>(null);
 
   useEffect(() => {
     const fetchShowcaseData = async () => {
@@ -159,7 +160,7 @@ const Showcase: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] dark:bg-[#0A0A0A] pb-24 selection:bg-primary/20">
+    <div className="min-h-screen bg-background pb-24 selection:bg-primary/20">
       <Helmet>
         <title>{profile.full_name || 'Afiliado'} | Vitrine de Ofertas AfiliateFlow IA</title>
         <meta name="description" content={`Confira as melhores ofertas e produtos selecionados por ${profile.full_name || 'nosso parceiro'}.`} />
@@ -172,11 +173,11 @@ const Showcase: React.FC = () => {
       </div>
 
       {/* Header Ultra Premium */}
-      <header className="bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-border/50 sticky top-0 z-50 shadow-sm">
+      <header className="bg-card/70 backdrop-blur-2xl border-b border-border/50 sticky top-0 z-50 shadow-sm">
         <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-primary to-purple-600 p-[1px] shadow-lg shadow-primary/20">
-              <div className="w-full h-full rounded-[15px] bg-white dark:bg-card flex items-center justify-center overflow-hidden">
+              <div className="w-full h-full rounded-[15px] bg-card flex items-center justify-center overflow-hidden">
                 {profile.avatar_url ? (
                   <img src={profile.avatar_url} alt={profile.full_name || ''} className="w-full h-full object-cover" />
                 ) : (
@@ -235,14 +236,24 @@ const Showcase: React.FC = () => {
             <h2 className="text-4xl md:text-6xl font-black mb-4 tracking-tighter text-foreground leading-none">
               OFERTAS <span className="text-primary italic">EXCLUSIVAS</span>
             </h2>
-            <p className="text-muted-foreground text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] max-w-xl mx-auto leading-relaxed mb-12">
+            <p className="text-muted-foreground text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] max-w-xl mx-auto leading-relaxed mb-4">
               Produtos validados com as melhores condições do mercado
             </p>
+            <div className="mb-12 text-center text-xs md:text-sm text-blue-900 dark:text-blue-300 font-normal uppercase tracking-wider">
+              Seja afiliado também, Conheça a{' '}
+              <a 
+                href="/" 
+                className="text-blue-900 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 underline transition-colors"
+              >
+                AfiliateFlow IA
+              </a>
+              .
+            </div>
 
             {/* Search Bar Premium */}
             <div className="max-w-xl mx-auto relative group">
               <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity" />
-              <div className="relative flex items-center bg-white dark:bg-card border border-border/50 rounded-2xl p-2 shadow-xl backdrop-blur-xl">
+              <div className="relative flex items-center bg-card border border-border/50 rounded-2xl p-2 shadow-xl backdrop-blur-xl">
                 <div className="pl-4 pr-2">
                   <ShoppingBag className="w-5 h-5 text-muted-foreground" />
                 </div>
@@ -279,7 +290,7 @@ const Showcase: React.FC = () => {
                 <section key={platformName} className="relative">
                   <div className="flex items-center gap-6 mb-12">
                     <div className="flex-1 h-[1px] bg-linear-to-r from-transparent via-border to-transparent" />
-                    <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-white dark:bg-card border border-border/50 shadow-sm">
+                    <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-card border border-border/50 shadow-sm">
                       <ShoppingBag className="w-5 h-5 text-primary" />
                       <h3 className="text-xl font-black uppercase tracking-tighter text-foreground">
                         {platformName}
@@ -301,7 +312,10 @@ const Showcase: React.FC = () => {
                         transition={{ delay: idx * 0.1 }}
                         whileHover={{ y: -8 }}
                       >
-                        <Card className="h-full flex flex-col p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 bg-white dark:bg-card group rounded-3xl">
+                        <Card 
+                          onClick={() => setSelectedLink(link)}
+                          className="h-full flex flex-col p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 bg-card group rounded-3xl cursor-pointer"
+                        >
                           <div className="aspect-square relative overflow-hidden bg-muted/20">
                             {link.thumbnail_url ? (
                               <img 
@@ -330,27 +344,10 @@ const Showcase: React.FC = () => {
                             </div>
                             
                             {link.original_price && link.sale_price && (
-                              <div className="absolute top-4 right-4 bg-danger text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-xl animate-bounce">
+                              <div className="absolute top-4 right-4 bg-danger text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-xl">
                                 -{Math.round((1 - link.sale_price / link.original_price) * 100)}% OFF
                               </div>
                             )}
-
-                            <div className="absolute bottom-4 right-4 flex gap-2 translate-y-12 group-hover:translate-y-0 transition-all duration-300">
-                              <button 
-                                onClick={() => handleCopyLink(link)}
-                                className="w-10 h-10 bg-white/90 dark:bg-black/80 backdrop-blur-xl rounded-2xl shadow-xl flex items-center justify-center hover:text-primary transition-colors border border-border/20"
-                                title="Copiar Link"
-                              >
-                                {copiedId === link.id ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
-                              </button>
-                              <button 
-                                onClick={() => handleShareProduct(link)}
-                                className="w-10 h-10 bg-white/90 dark:bg-black/80 backdrop-blur-xl rounded-2xl shadow-xl flex items-center justify-center hover:text-primary transition-colors border border-border/20"
-                                title="Compartilhar no WhatsApp"
-                              >
-                                <MessageCircle className="w-5 h-5" />
-                              </button>
-                            </div>
                           </div>
 
                           <div className="p-6 flex-1 flex flex-col">
@@ -364,29 +361,58 @@ const Showcase: React.FC = () => {
                             </div>
                             
                             <div className="mt-auto space-y-6">
-                              <div className="flex flex-col gap-1">
-                                {link.original_price && (
-                                  <span className="text-[10px] text-muted-foreground line-through font-bold uppercase tracking-widest opacity-60">
-                                    De R$ {link.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                  </span>
-                                )}
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-black text-primary">R$</span>
-                                  <span className="text-3xl font-black text-foreground tracking-tighter">
-                                    {(link.sale_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                  </span>
+                              <div className="flex items-end justify-between gap-4">
+                                <div className="flex flex-col gap-1">
+                                  {link.original_price && (
+                                    <span className="text-[10px] text-muted-foreground line-through font-bold uppercase tracking-widest opacity-60">
+                                      De R$ {link.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  )}
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-xs font-black text-primary">R$</span>
+                                      <span className="text-3xl font-black text-foreground tracking-tighter">
+                                        {(link.sale_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                      </span>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-1 ml-2 self-end mb-1">
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCopyLink(link);
+                                        }}
+                                        className="p-1 rounded-md text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                                        title="Copiar Link"
+                                      >
+                                        {copiedId === link.id ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                      </button>
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleShareProduct(link);
+                                        }}
+                                        className="p-1 rounded-md text-muted-foreground hover:text-green-500 transition-colors cursor-pointer"
+                                        title="Compartilhar no WhatsApp"
+                                      >
+                                        <MessageCircle className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
 
                               <Button 
                                 variant="primary" 
                                 className="w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/25 group/btn relative overflow-hidden"
-                                onClick={() => window.open(`${window.location.origin}/go/${link.short_code}`, '_blank')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(`${window.location.origin}/go/${link.short_code}`, '_blank');
+                                }}
                               >
                                 <span className="relative z-10 flex items-center justify-center gap-3">
-                                  RESGATAR OFERTA <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                  RESGATAR OFERTA <ArrowRight className="w-4 h-4" />
                                 </span>
-                                <div className="absolute inset-0 bg-linear-to-r from-primary to-purple-600 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
                               </Button>
                             </div>
                           </div>
@@ -399,7 +425,7 @@ const Showcase: React.FC = () => {
             })}
           </div>
         ) : (
-          <div className="py-32 text-center bg-white dark:bg-card rounded-[3rem] border-2 border-dashed border-border/50 shadow-inner">
+          <div className="py-32 text-center bg-card rounded-[3rem] border-2 border-dashed border-border/50 shadow-inner">
             <div className="w-24 h-24 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-8">
               <ShoppingBag className="w-12 h-12 text-muted-foreground/30" />
             </div>
@@ -437,6 +463,126 @@ const Showcase: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Product Details Modal */}
+      <AnimatePresence>
+        {selectedLink && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/40 backdrop-blur-md" 
+              onClick={() => setSelectedLink(null)}
+            />
+            
+            {/* Modal Content */}
+            <div className="relative w-full max-w-lg bg-card border border-border rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh]">
+              {/* Close Button */}
+              <button 
+                onClick={() => setSelectedLink(null)}
+                className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-card/80 border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Product Info */}
+              <div className="p-6 overflow-y-auto space-y-6">
+                {/* Image Container with fixed smaller size to prevent distortion */}
+                <div className="w-full bg-muted/20 rounded-2xl p-4 flex items-center justify-center min-h-[140px]">
+                  {selectedLink.thumbnail_url ? (
+                    <img 
+                      src={selectedLink.thumbnail_url} 
+                      alt={selectedLink.title} 
+                      className="w-20 h-20 md:w-24 md:h-24 object-contain rounded-xl bg-white p-2 shadow-sm border border-border/30"
+                    />
+                  ) : (
+                    <div className="h-32 flex flex-col items-center justify-center gap-3">
+                      <ShoppingBag className="w-10 h-10 text-muted-foreground/20" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Sem imagem</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  {/* Platform Badge */}
+                  <div className="inline-block bg-muted text-muted-foreground text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border border-border">
+                    {selectedLink.platform || 'Outra'}
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-xl font-bold leading-snug">
+                    {selectedLink.title}
+                  </h3>
+
+                  {/* Description */}
+                  {selectedLink.description && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {selectedLink.description}
+                    </p>
+                  )}
+
+                  {/* Rating */}
+                  <div className="flex items-center gap-1">
+                    {renderStars(selectedLink.rating)}
+                    <span className="text-xs text-muted-foreground ml-1 font-bold">(5.0)</span>
+                  </div>
+                </div>
+
+                {/* Price and Sharing Buttons */}
+                <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/50">
+                  <div className="flex flex-col gap-1">
+                    {selectedLink.original_price && (
+                      <span className="text-xs text-muted-foreground line-through font-bold uppercase tracking-widest opacity-60">
+                        De R$ {selectedLink.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-xs font-black text-primary">R$</span>
+                        <span className="text-3xl font-black text-foreground tracking-tighter">
+                          {(selectedLink.sale_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1.5 self-end mb-1">
+                        <button 
+                          onClick={() => handleCopyLink(selectedLink)}
+                          className="w-7 h-7 rounded-lg bg-card hover:bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                          title="Copiar Link"
+                        >
+                          {copiedId === selectedLink.id ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                        <button 
+                          onClick={() => handleShareProduct(selectedLink)}
+                          className="w-7 h-7 rounded-lg bg-card hover:bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-green-500 transition-colors cursor-pointer"
+                          title="Compartilhar no WhatsApp"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="p-6 bg-muted/10 border-t border-border/50">
+                <Button 
+                  variant="primary" 
+                  className="w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/25 relative overflow-hidden"
+                  onClick={() => {
+                    window.open(`${window.location.origin}/go/${selectedLink.short_code}`, '_blank');
+                    setSelectedLink(null);
+                  }}
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-3">
+                    COMPRAR AGORA <ArrowRight className="w-4 h-4" />
+                  </span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

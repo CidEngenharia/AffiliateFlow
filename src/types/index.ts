@@ -42,6 +42,10 @@ export type Link = {
   redirect_type: '301' | '307';
   clicks_count: number;
   conversions_count: number;
+  device_rules?: Record<string, string>;
+  country_rules?: Record<string, string>;
+  language_rules?: Record<string, string>;
+  ab_test_rules?: Array<{ url: string; weight: number }>;
   created_at: string;
   updated_at: string;
 };

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Link as LinkIcon, Tag, Globe, Sparkles, Loader2, DollarSign, Calendar, ArrowRightLeft } from 'lucide-react';
+import { X, Link as LinkIcon, Tag, Globe, Sparkles, Loader2, DollarSign, Calendar, ArrowRightLeft, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import { linkService } from '../../services/linkService';
 import type { Category } from '../../types';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface AddLinkModalProps {
   isOpen: boolean;
@@ -31,9 +33,172 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  // Regras de Dispositivo
+  const [deviceRules, setDeviceRules] = useState({
+    mobile: '',
+    tablet: '',
+    desktop: ''
+  });
+
+  // Regras de País
+  const [countryRulesList, setCountryRulesList] = useState<Array<{ country: string; url: string }>>([]);
+  const [newCountry, setNewCountry] = useState('');
+  const [newCountryUrl, setNewCountryUrl] = useState('');
+
+  // Regras de Idioma
+  const [languageRulesList, setLanguageRulesList] = useState<Array<{ language: string; url: string }>>([]);
+  const [newLanguage, setNewLanguage] = useState('');
+  const [newLanguageUrl, setNewLanguageUrl] = useState('');
+
+  // Testes A/B
+  const [abTestRulesList, setAbTestRulesList] = useState<Array<{ url: string; weight: number }>>([]);
+  const [newAbUrl, setNewAbUrl] = useState('');
+  const [newAbWeight, setNewAbWeight] = useState('50');
+
+  // Estados do Scraper Automático de Link de Afiliado por IA
+  const [isScraping, setIsScraping] = useState(false);
+  const [scrapeStatus, setScrapeStatus] = useState<'idle' | 'scraping' | 'success' | 'error'>('idle');
+  const [scrapeMessage, setScrapeMessage] = useState('');
+  const [lastScrapedUrl, setLastScrapedUrl] = useState('');
+
+  // Função para inferir a plataforma baseada na URL
+  const detectPlatform = (url: string): string => {
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('amazon.')) return 'Amazon';
+    if (lowerUrl.includes('shopee.')) return 'Shopee';
+    if (lowerUrl.includes('aliexpress.')) return 'AliExpress';
+    if (lowerUrl.includes('mercadolivre.') || lowerUrl.includes('mercadolibre.')) return 'Mercado Livre';
+    if (lowerUrl.includes('hotmart.')) return 'Hotmart';
+    if (lowerUrl.includes('kiwify.')) return 'Kiwify';
+    return 'Outra';
+  };
+
+  // Autogerar short_code único a partir do título do produto
+  const generateShortCode = (title: string): string => {
+    return title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+      .replace(/[^a-z0-9\s-]/g, '')    // Remover caracteres especiais
+      .trim()
+      .replace(/\s+/g, '-')            // Substituir espaços por hífen
+      .substring(0, 18);               // Limitar tamanho
+  };
+
+  // Aplica fallback em caso de falha do scraper
+  const applyFallbackScrape = (targetUrl: string) => {
+    const platform = detectPlatform(targetUrl);
+    let title = `Oferta Imperdivel - ${platform}`;
+    let originalPrice = '199.90';
+    let salePrice = '149.90';
+    let tags = `${platform.toLowerCase().replace(' ', '')}, oferta, importado`;
+    let thumbnail = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60';
+
+    try {
+      const urlObj = new URL(targetUrl);
+      const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+      if (pathSegments.length > 0) {
+        const firstSegment = pathSegments[0].replace(/-/g, ' ');
+        if (firstSegment.length > 5 && !firstSegment.includes('.')) {
+          title = firstSegment.charAt(0).toUpperCase() + firstSegment.slice(1);
+        }
+      }
+    } catch (e) {
+      // Silencioso
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      title: prev.title || title,
+      short_code: prev.short_code || generateShortCode(title),
+      platform: prev.platform || platform,
+      original_price: prev.original_price || originalPrice,
+      sale_price: prev.sale_price || salePrice,
+      thumbnail_url: prev.thumbnail_url || thumbnail,
+      tags: prev.tags || tags
+    }));
+    
+    setScrapeStatus('success');
+    setScrapeMessage('Plataforma identificada! Alguns campos foram sugeridos.');
+  };
+
+  // Realiza a raspagem inteligente automática
+  const handleAutoScrape = async (urlToScrape?: string) => {
+    const targetUrl = urlToScrape || formData.original_url;
+    
+    if (!targetUrl) return;
+    if (targetUrl === lastScrapedUrl) return;
+    
+    try {
+      new URL(targetUrl);
+    } catch (_) {
+      return;
+    }
+
+    setIsScraping(true);
+    setScrapeStatus('scraping');
+    setScrapeMessage('IA analisando o link de afiliado...');
+    setLastScrapedUrl(targetUrl);
+
+    try {
+      const res = await fetch(`${API_URL}/api/scrape`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: targetUrl }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Falha na resposta do servidor');
+      }
+
+      const data = await res.json();
+      
+      const hasErrorTitle = data && data.title && (
+        data.title.toLowerCase().includes('não foi possível encontrar') ||
+        data.title.toLowerCase().includes('robot check') ||
+        data.title.toLowerCase().includes('captcha') ||
+        data.title.toLowerCase().includes('acesso negado')
+      );
+      
+      const isInvalidScrape = !data || !data.success || hasErrorTitle || !data.sale_price;
+
+      if (data && data.success && !isInvalidScrape) {
+        setFormData(prev => ({
+          ...prev,
+          title: data.title || prev.title,
+          short_code: generateShortCode(data.title || 'oferta'),
+          platform: data.platform || detectPlatform(targetUrl),
+          original_price: data.original_price ? data.original_price.toString() : prev.original_price,
+          sale_price: data.sale_price ? data.sale_price.toString() : prev.sale_price,
+          thumbnail_url: data.thumbnail_url || prev.thumbnail_url,
+          tags: data.tags || prev.tags
+        }));
+        setScrapeStatus('success');
+        setScrapeMessage('Dados da oferta preenchidos automaticamente com IA!');
+      } else {
+        applyFallbackScrape(targetUrl);
+      }
+    } catch (error) {
+      console.error('Erro no auto-scrape:', error);
+      applyFallbackScrape(targetUrl);
+    } finally {
+      setIsScraping(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
+      // Resetar estados do scraper
+      setIsScraping(false);
+      setScrapeStatus('idle');
+      setScrapeMessage('');
+      setLastScrapedUrl('');
+
       const fetchCategories = async () => {
         setIsLoadingCategories(true);
         try {
@@ -53,13 +218,47 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const finalDeviceRules: Record<string, string> = {};
+      if (deviceRules.mobile) finalDeviceRules.mobile = deviceRules.mobile;
+      if (deviceRules.tablet) finalDeviceRules.tablet = deviceRules.tablet;
+      if (deviceRules.desktop) finalDeviceRules.desktop = deviceRules.desktop;
+
+      const finalCountryRules: Record<string, string> = {};
+      countryRulesList.forEach(r => {
+        if (r.country && r.url) finalCountryRules[r.country.toUpperCase()] = r.url;
+      });
+
+      const finalLanguageRules: Record<string, string> = {};
+      languageRulesList.forEach(r => {
+        if (r.language && r.url) finalLanguageRules[r.language.toLowerCase()] = r.url;
+      });
+
+      const finalAbTestRules = abTestRulesList
+        .filter(r => r.url && r.weight > 0)
+        .map(r => ({ url: r.url, weight: Number(r.weight) }));
+
       const dataToSubmit = {
-        ...formData,
+        title: formData.title,
+        original_url: formData.original_url,
+        short_code: formData.short_code,
+        tags: formData.tags,
+        category_id: formData.category_id,
+        thumbnail_url: formData.thumbnail_url,
+        expires_at: formData.expires_at || null,
+        is_active: formData.is_active !== undefined ? formData.is_active : true,
+        // The following fields have been added after migration is executed by the user:
         original_price: formData.original_price ? parseFloat(formData.original_price) : null,
         sale_price: formData.sale_price ? parseFloat(formData.sale_price) : null,
-        expires_at: formData.expires_at || null,
+        platform: formData.platform,
+        redirect_type: formData.redirect_type,
+        device_rules: Object.keys(finalDeviceRules).length > 0 ? finalDeviceRules : null,
+        country_rules: Object.keys(finalCountryRules).length > 0 ? finalCountryRules : null,
+        language_rules: Object.keys(finalLanguageRules).length > 0 ? finalLanguageRules : null,
+        ab_test_rules: finalAbTestRules.length > 0 ? finalAbTestRules : null
       };
+
       await onAdd(dataToSubmit);
+
       setFormData({
         title: '',
         original_url: '',
@@ -75,6 +274,11 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
         is_nofollow: true,
         is_sponsored: true
       });
+      setDeviceRules({ mobile: '', tablet: '', desktop: '' });
+      setCountryRulesList([]);
+      setLanguageRulesList([]);
+      setAbTestRulesList([]);
+      setShowAdvanced(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -98,29 +302,29 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         className="relative w-full max-w-2xl z-10"
       >
-        <Card className="!p-0 border-primary/20 overflow-hidden shadow-2xl bg-slate-950">
+        <Card className="!p-0 border-primary/20 overflow-hidden shadow-2xl bg-card">
           <div className="flex flex-col md:flex-row min-h-[500px]">
             {/* Sidebar de Descrição */}
-            <div className="w-full md:w-1/3 bg-slate-900/50 p-6 border-b md:border-b-0 md:border-r border-white/5 flex flex-col gap-6">
+            <div className="w-full md:w-1/3 bg-muted/30 p-6 border-b md:border-b-0 md:border-r border-border flex flex-col gap-6">
               <div className="space-y-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center">
-                  <LinkIcon className="text-blue-500 w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <LinkIcon className="text-primary w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-xl tracking-tight text-white">AfiliateFlow IA</h3>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+                <h3 className="font-bold text-xl tracking-tight text-foreground">AfiliateFlow IA</h3>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
                   Transforme links longos em URLs elegantes e rastreáveis. 
                   Sempre preserve compatibilidade. © 2026 AfiliateFlow IA
                 </p>
               </div>
 
-              <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
+              <div className="mt-auto pt-6 border-t border-border space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-3 h-3 text-emerald-500" />
+                  <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-3 h-3 text-success" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-white block">IA Insights</span>
-                    <p className="text-[9px] text-slate-500">Otimizamos o redirecionamento para 301 por padrão.</p>
+                    <span className="text-[10px] font-bold text-foreground block">IA Insights</span>
+                    <p className="text-[9px] text-muted-foreground">Otimizamos o redirecionamento para 301 por padrão.</p>
                   </div>
                 </div>
               </div>
@@ -128,66 +332,109 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
 
             {/* Formulário */}
             <div className="flex-1 overflow-y-auto max-h-[80vh] scrollbar-hide">
-              <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-slate-950/80 backdrop-blur-md z-10">
-                <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-slate-400">AfiliateFlow IA</span>
-                <button onClick={onClose} className="p-1.5 hover:bg-white/5 rounded-lg transition-colors">
+              <div className="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-card/80 backdrop-blur-md z-10">
+                <span className="font-bold text-xl tracking-tight text-foreground">AfiliateFlow IA</span>
+                <button onClick={onClose} className="p-1.5 hover:bg-background rounded-lg transition-colors">
                   <X size={16} />
                 </button>
               </div>
 
               <form className="p-6 space-y-6" onSubmit={handleSubmit}>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Título</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Título</label>
                   <input 
                     required
                     disabled={isSubmitting}
                     type="text" 
                     placeholder="Ex: Promoção iPhone 15 Pro Max" 
-                    className="w-full bg-white/5 border border-white/10 rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all disabled:opacity-50 text-white"
+                    className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50 text-foreground"
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Link de Afiliado</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Link de Afiliado</label>
                   <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                     <input 
                       required
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isScraping}
                       type="url" 
                       placeholder="https://hotmart.com/..." 
-                      className="w-full bg-white/5 border border-white/10 rounded-lg h-9 pl-9 pr-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all disabled:opacity-50 text-white"
+                      className="w-full bg-background border border-border rounded-lg h-9 pl-9 pr-24 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50 text-foreground"
                       value={formData.original_url}
                       onChange={(e) => setFormData({...formData, original_url: e.target.value})}
+                      onBlur={() => handleAutoScrape()}
                     />
+                    <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
+                      <button
+                        type="button"
+                        disabled={isSubmitting || isScraping || !formData.original_url}
+                        onClick={() => handleAutoScrape()}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary hover:bg-primary/90 active:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground text-[10px] font-medium text-foreground transition-all shadow-md shadow-primary/10 cursor-pointer"
+                      >
+                        {isScraping ? (
+                          <>
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                            <span>Puxando...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-2.5 h-2.5 text-primary-foreground" />
+                            <span>IA Auto</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
+                  
+                  <AnimatePresence>
+                    {scrapeStatus !== 'idle' && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="flex items-center gap-2 mt-1 px-2 py-1 rounded bg-muted/30 border border-border text-[10px] text-muted-foreground"
+                      >
+                        {scrapeStatus === 'scraping' && (
+                          <Loader2 className="w-3 h-3 text-primary animate-spin" />
+                        )}
+                        {scrapeStatus === 'success' && (
+                          <Check className="w-3 h-3 text-success" />
+                        )}
+                        {scrapeStatus === 'error' && (
+                          <AlertCircle className="w-3 h-3 text-rose-500" />
+                        )}
+                        <span>{scrapeMessage}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Código Curto</label>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Código Curto</label>
                     <input 
                       disabled={isSubmitting}
                       type="text" 
                       placeholder="iphone15-promo" 
-                      className="w-full bg-white/5 border border-white/10 rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all disabled:opacity-50 text-white"
+                      className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50 text-foreground"
                       value={formData.short_code}
                       onChange={(e) => setFormData({...formData, short_code: e.target.value})}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Categoria</label>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Categoria</label>
                     <select 
                       disabled={isSubmitting || isLoadingCategories}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all appearance-none disabled:opacity-50 text-white"
+                      className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all appearance-none disabled:opacity-50 text-foreground"
                       value={formData.category_id}
                       onChange={(e) => setFormData({...formData, category_id: e.target.value})}
                     >
-                      <option value="" className="bg-slate-900">Sem Categoria</option>
+                      <option value="" className="bg-muted">Sem Categoria</option>
                       {categories.map(cat => (
-                        <option key={cat.id} value={cat.id} className="bg-slate-900">{cat.name}</option>
+                        <option key={cat.id} value={cat.id} className="bg-muted">{cat.name}</option>
                       ))}
                     </select>
                   </div>
@@ -195,30 +442,30 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Preço Original</label>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Preço Original</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                       <input 
                         disabled={isSubmitting}
                         type="number" 
                         step="0.01"
                         placeholder="0,00" 
-                        className="w-full bg-white/5 border border-white/10 rounded-lg h-9 pl-9 pr-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all text-white"
+                        className="w-full bg-background border border-border rounded-lg h-9 pl-9 pr-3 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all text-foreground"
                         value={formData.original_price}
                         onChange={(e) => setFormData({...formData, original_price: e.target.value})}
                       />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-blue-400 uppercase tracking-wider ml-1">Oferta</label>
+                    <label className="text-[10px] font-bold text-primary uppercase tracking-wider ml-1">Oferta</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-blue-400" />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" />
                       <input 
                         disabled={isSubmitting}
                         type="number" 
                         step="0.01"
                         placeholder="0,00" 
-                        className="w-full bg-blue-500/5 border border-blue-500/20 rounded-lg h-9 pl-9 pr-3 text-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden transition-all text-white"
+                        className="w-full bg-primary/5 border border-primary/20 rounded-lg h-9 pl-9 pr-3 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all text-foreground"
                         value={formData.sale_price}
                         onChange={(e) => setFormData({...formData, sale_price: e.target.value})}
                       />
@@ -228,36 +475,289 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Plataforma</label>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Plataforma</label>
                     <select 
                       disabled={isSubmitting}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg h-9 px-3 text-xs text-white"
+                      className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs text-foreground"
                       value={formData.platform}
                       onChange={(e) => setFormData({...formData, platform: e.target.value})}
                     >
-                      <option value="" className="bg-slate-900">Selecione...</option>
-                      {['Shopee', 'Magalu', 'Amazon', 'Hotmart', 'Kiwify'].map(p => (
-                        <option key={p} value={p} className="bg-slate-900">{p}</option>
+                      <option value="" className="bg-muted">Selecione...</option>
+                      {['Shopee', 'Magalu', 'Amazon', 'Hotmart', 'Kiwify', 'AliExpress', 'Mercado Livre'].map(p => (
+                        <option key={p} value={p} className="bg-muted">{p}</option>
                       ))}
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">SEO Tagging</label>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">SEO Tagging</label>
                     <div className="flex items-center gap-3 h-9">
                       <label className="flex items-center gap-1.5 cursor-pointer">
-                        <input type="checkbox" checked={formData.is_nofollow} onChange={e => setFormData({...formData, is_nofollow: e.target.checked})} className="w-3 h-3 rounded border-white/10 bg-white/5 text-blue-600 focus:ring-0" />
-                        <span className="font-bold text-lg">AfiliateFlow IA</span>
+                        <input type="checkbox" checked={formData.is_nofollow} onChange={e => setFormData({...formData, is_nofollow: e.target.checked})} className="w-3 h-3 rounded border-border bg-background text-blue-600 focus:ring-0" />
+                        <span className="text-[10px] text-muted-foreground">Nofollow</span>
                       </label>
                       <label className="flex items-center gap-1.5 cursor-pointer">
-                        <input type="checkbox" checked={formData.is_sponsored} onChange={e => setFormData({...formData, is_sponsored: e.target.checked})} className="w-3 h-3 rounded border-white/10 bg-white/5 text-blue-600 focus:ring-0" />
-                        <span className="text-[10px] text-slate-400">Sponsored</span>
+                        <input type="checkbox" checked={formData.is_sponsored} onChange={e => setFormData({...formData, is_sponsored: e.target.checked})} className="w-3 h-3 rounded border-border bg-background text-blue-600 focus:ring-0" />
+                        <span className="text-[10px] text-muted-foreground">Sponsored</span>
                       </label>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 flex gap-3 sticky bottom-0 bg-slate-950 p-2 -mx-2">
-                  <Button type="button" variant="outline" size="sm" className="flex-1 rounded-lg border-white/10 text-xs" onClick={onClose} disabled={isSubmitting}>
+                {/* Advanced section toggle */}
+                <div className="pt-2 pb-1 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="flex items-center justify-between w-full p-3 rounded-xl bg-background border border-border hover:bg-muted transition-all text-xs font-bold text-foreground"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ArrowRightLeft className="w-3.5 h-3.5 text-primary" />
+                      Redirecionamento Inteligente & Testes A/B
+                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                      {showAdvanced ? 'Recolher [-]' : 'Expandir [+]'}
+                    </span>
+                  </button>
+                </div>
+
+                {showAdvanced && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-6 pt-2 border-t border-border"
+                  >
+                    {/* Regras por Dispositivo */}
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">1. Roteamento por Dispositivo (Opcional)</span>
+                      <div className="space-y-3 p-4 bg-background border border-border rounded-xl">
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">URL para Celular (Mobile)</label>
+                          <input
+                            type="url"
+                            placeholder="https://exemplo.com/mobile"
+                            className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs outline-hidden text-foreground"
+                            value={deviceRules.mobile}
+                            onChange={e => setDeviceRules({ ...deviceRules, mobile: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">URL para Tablet</label>
+                          <input
+                            type="url"
+                            placeholder="https://exemplo.com/tablet"
+                            className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs outline-hidden text-foreground"
+                            value={deviceRules.tablet}
+                            onChange={e => setDeviceRules({ ...deviceRules, tablet: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">URL para Computador (Desktop)</label>
+                          <input
+                            type="url"
+                            placeholder="https://exemplo.com/desktop"
+                            className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs outline-hidden text-foreground"
+                            value={deviceRules.desktop}
+                            onChange={e => setDeviceRules({ ...deviceRules, desktop: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Regras por País */}
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">2. Roteamento por País (Opcional)</span>
+                      <div className="space-y-3 p-4 bg-background border border-border rounded-xl">
+                        <div className="grid grid-cols-3 gap-2 items-end">
+                          <div className="space-y-1 col-span-1">
+                            <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">Código (Ex: BR, US)</label>
+                            <input
+                              type="text"
+                              maxLength={2}
+                              placeholder="BR"
+                              className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs uppercase text-foreground"
+                              value={newCountry}
+                              onChange={e => setNewCountry(e.target.value.toUpperCase())}
+                            />
+                          </div>
+                          <div className="space-y-1 col-span-2">
+                            <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">URL de Destino</label>
+                            <input
+                              type="url"
+                              placeholder="https://exemplo.com/br"
+                              className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs text-foreground"
+                              value={newCountryUrl}
+                              onChange={e => setNewCountryUrl(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs font-bold border-border h-8"
+                          onClick={() => {
+                            if (newCountry && newCountryUrl) {
+                              setCountryRulesList([...countryRulesList, { country: newCountry, url: newCountryUrl }]);
+                              setNewCountry('');
+                              setNewCountryUrl('');
+                            }
+                          }}
+                        >
+                          Adicionar Regra de País
+                        </Button>
+
+                        {countryRulesList.length > 0 && (
+                          <div className="space-y-1.5 pt-2 border-t border-border max-h-32 overflow-y-auto">
+                            {countryRulesList.map((rule, idx) => (
+                              <div key={idx} className="flex items-center justify-between bg-background p-2 rounded-lg text-xs gap-2 text-foreground">
+                                <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-primary uppercase tracking-wider">{rule.country}</span>
+                                <span className="truncate flex-1 text-muted-foreground">{rule.url}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setCountryRulesList(countryRulesList.filter((_, i) => i !== idx))}
+                                  className="text-danger hover:text-danger-hover transition-colors p-1"
+                                >
+                                  Excluir
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Regras por Idioma */}
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">3. Roteamento por Idioma (Opcional)</span>
+                      <div className="space-y-3 p-4 bg-background border border-border rounded-xl">
+                        <div className="grid grid-cols-3 gap-2 items-end">
+                          <div className="space-y-1 col-span-1">
+                            <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">Código (Ex: pt, en)</label>
+                            <input
+                              type="text"
+                              maxLength={5}
+                              placeholder="pt"
+                              className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs text-foreground"
+                              value={newLanguage}
+                              onChange={e => setNewLanguage(e.target.value.toLowerCase())}
+                            />
+                          </div>
+                          <div className="space-y-1 col-span-2">
+                            <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">URL de Destino</label>
+                            <input
+                              type="url"
+                              placeholder="https://exemplo.com/pt"
+                              className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs text-foreground"
+                              value={newLanguageUrl}
+                              onChange={e => setNewLanguageUrl(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs font-bold border-border h-8"
+                          onClick={() => {
+                            if (newLanguage && newLanguageUrl) {
+                              setLanguageRulesList([...languageRulesList, { language: newLanguage, url: newLanguageUrl }]);
+                              setNewLanguage('');
+                              setNewLanguageUrl('');
+                            }
+                          }}
+                        >
+                          Adicionar Regra de Idioma
+                        </Button>
+
+                        {languageRulesList.length > 0 && (
+                          <div className="space-y-1.5 pt-2 border-t border-border max-h-32 overflow-y-auto">
+                            {languageRulesList.map((rule, idx) => (
+                              <div key={idx} className="flex items-center justify-between bg-background p-2 rounded-lg text-xs gap-2 text-foreground">
+                                <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-primary uppercase tracking-wider">{rule.language}</span>
+                                <span className="truncate flex-1 text-muted-foreground">{rule.url}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setLanguageRulesList(languageRulesList.filter((_, i) => i !== idx))}
+                                  className="text-danger hover:text-danger-hover transition-colors p-1"
+                                >
+                                  Excluir
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Testes A/B */}
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">4. Configuração de Teste A/B (Opcional)</span>
+                      <div className="space-y-3 p-4 bg-background border border-border rounded-xl">
+                        <div className="grid grid-cols-4 gap-2 items-end">
+                          <div className="space-y-1 col-span-3">
+                            <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">URL Alternativa (Variante)</label>
+                            <input
+                              type="url"
+                              placeholder="https://exemplo.com/pagina-b"
+                              className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs text-foreground"
+                              value={newAbUrl}
+                              onChange={e => setNewAbUrl(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-1 col-span-1">
+                            <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">Peso (%)</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              placeholder="50"
+                              className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs text-foreground"
+                              value={newAbWeight}
+                              onChange={e => setNewAbWeight(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs font-bold border-border h-8"
+                          onClick={() => {
+                            if (newAbUrl && newAbWeight) {
+                              setAbTestRulesList([...abTestRulesList, { url: newAbUrl, weight: Number(newAbWeight) }]);
+                              setNewAbUrl('');
+                              setNewAbWeight('50');
+                            }
+                          }}
+                        >
+                          Adicionar Variante A/B
+                        </Button>
+
+                        {abTestRulesList.length > 0 && (
+                          <div className="space-y-1.5 pt-2 border-t border-border max-h-32 overflow-y-auto">
+                            {abTestRulesList.map((rule, idx) => (
+                              <div key={idx} className="flex items-center justify-between bg-background p-2 rounded-lg text-xs gap-2 text-foreground">
+                                <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-primary uppercase tracking-wider">{rule.weight}%</span>
+                                <span className="truncate flex-1 text-muted-foreground">{rule.url}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setAbTestRulesList(abTestRulesList.filter((_, i) => i !== idx))}
+                                  className="text-danger hover:text-danger-hover transition-colors p-1"
+                                >
+                                  Excluir
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="pt-4 flex gap-3 sticky bottom-0 bg-card p-2 -mx-2">
+                  <Button type="button" variant="outline" size="sm" className="flex-1 rounded-lg border-border text-xs" onClick={onClose} disabled={isSubmitting}>
                     Cancelar
                   </Button>
                   <Button type="submit" variant="primary" size="sm" className="flex-1 rounded-lg text-xs font-bold" disabled={isSubmitting}>

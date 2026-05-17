@@ -1,6 +1,7 @@
 const fastify = require('fastify')({ logger: true });
 const cors = require('@fastify/cors');
 const scanner = require('./scanner');
+const { scrapeProduct } = require('./engines/scraper');
 require('dotenv').config();
 
 // Registro de Plugins
@@ -534,6 +535,23 @@ fastify.get('/api/reports/pdf/:id', async (request, reply) => {
   } catch (err) {
     fastify.log.error(err);
     return reply.status(500).send({ error: 'Erro interno ao tentar gerar o relatorio em PDF' });
+  }
+});
+
+// Endpoint de Raspagem de Oferta por URL
+fastify.post('/api/scrape', async (request, reply) => {
+  const { url } = request.body;
+  if (!url) {
+    return reply.status(400).send({ error: 'URL do produto é obrigatória' });
+  }
+
+  try {
+    fastify.log.info(`Iniciando raspagem de metadados para: ${url}`);
+    const productInfo = await scrapeProduct(url);
+    return productInfo;
+  } catch (err) {
+    fastify.log.error(err);
+    return reply.status(500).send({ error: `Falha ao extrair dados do produto: ${err.message}` });
   }
 });
 

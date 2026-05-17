@@ -3,9 +3,17 @@ import type { Search } from '../types';
 
 export const searchService = {
   async saveSearch(search: Omit<Search, 'id' | 'created_at'>) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Usuário não autenticado no sistema.');
+
+    const searchWithUser = {
+      ...search,
+      user_id: user.id
+    };
+
     const { data, error } = await supabase
       .from('searches')
-      .insert([search])
+      .insert([searchWithUser])
       .select()
       .single();
 

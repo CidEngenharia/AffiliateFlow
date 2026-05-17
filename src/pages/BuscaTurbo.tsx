@@ -165,14 +165,10 @@ const BuscaTurbo: React.FC = () => {
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
       {/* Header Section */}
       <div className="text-center space-y-2">
-        <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border text-muted-foreground mb-2"
-        >
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border text-muted-foreground mb-2">
           <Sparkles className="w-3 h-3" />
           <span className="text-[10px] font-bold uppercase tracking-widest">Inteligência OSINT</span>
-        </motion.div>
+        </div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Busca Turbo <span className="text-primary">AI</span>
         </h1>
@@ -181,16 +177,20 @@ const BuscaTurbo: React.FC = () => {
         </p>
 
         {/* Nota sobre Navegadores */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 max-w-2xl mx-auto"
+        <button
+          onClick={() => {
+            const el = document.getElementById('gerenciamento-abas');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          className="mt-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 max-w-2xl mx-auto flex items-center justify-center gap-3 w-full hover:bg-green-500/20 transition-all cursor-pointer"
         >
           <p className="text-green-500 text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-3">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Nota: Navegadores bloqueiam aberturas múltiplas. Clique nos botões acima para forçar a abertura se necessário, Busca turbinada.
+            Se seu navegador bloquear a abertura das abas , clique aqui.
           </p>
-        </motion.div>
+        </button>
 
         {/* Trends Section - New Premium Feature */}
         <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
@@ -199,7 +199,7 @@ const BuscaTurbo: React.FC = () => {
             <button
               key={trend}
               onClick={() => setQuery(trend)}
-              className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all hover:scale-105 active:scale-95"
+              className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
             >
               {trend}
             </button>

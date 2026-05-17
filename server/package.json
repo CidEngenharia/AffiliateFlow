@@ -17,6 +17,8 @@
     "fastify": "^4.26.2",
     "ioredis": "^5.4.1",
     "puppeteer": "^22.6.4",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "whoiser": "^1.15.0",
     "ws": "^8.20.1"
   },

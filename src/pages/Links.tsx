@@ -15,6 +15,7 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import LinkCard from '../components/links/LinkCard';
 import AddLinkModal from '../components/links/AddLinkModal';
+import ImportOfferModal from '../components/links/ImportOfferModal';
 import type { Link } from '../types';
 import { linkService } from '../services/linkService';
 
@@ -22,6 +23,7 @@ const Links: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [links, setLinks] = useState<Link[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +74,27 @@ const Links: React.FC = () => {
     }
   };
 
+  const handleImportOffer = async (formData: any) => {
+    try {
+      const tagsArray = typeof formData.tags === 'string' 
+        ? formData.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t !== '')
+        : formData.tags;
+
+      await linkService.create({
+        ...formData,
+        tags: tagsArray,
+        clicks_count: 0,
+        conversions_count: 0
+      });
+      
+      setIsImportModalOpen(false);
+      fetchLinks(); // Recarregar a lista
+    } catch (err: any) {
+      console.error('Erro ao importar oferta:', err);
+      alert('Erro ao importar oferta: ' + (err.message || 'Erro desconhecido'));
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -81,7 +104,7 @@ const Links: React.FC = () => {
           <p className="text-sm text-muted-foreground">Gerencie seus links de afiliados e rastreie sua performance.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(true)}>
             <Upload className="w-4 h-4 mr-2" />
             Importar
           </Button>
@@ -96,6 +119,12 @@ const Links: React.FC = () => {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onAdd={handleAddLink}
+      />
+
+      <ImportOfferModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImportOffer}
       />
 
       {/* Filters & Search Bar */}

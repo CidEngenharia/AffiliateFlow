@@ -13,9 +13,19 @@ export const linkService = {
   },
 
   async create(link: Partial<Link>) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Usuário não autenticado no sistema.');
+
+    const cleanLink = { 
+      ...link,
+      user_id: user.id
+    };
+    if (cleanLink.category_id === '') {
+      cleanLink.category_id = null;
+    }
     const { data, error } = await supabase
       .from('links')
-      .insert([link])
+      .insert([cleanLink])
       .select()
       .single();
     
@@ -24,9 +34,13 @@ export const linkService = {
   },
 
   async update(id: string, updates: Partial<Link>) {
+    const cleanUpdates = { ...updates };
+    if (cleanUpdates.category_id === '') {
+      cleanUpdates.category_id = null;
+    }
     const { data, error } = await supabase
       .from('links')
-      .update(updates)
+      .update(cleanUpdates)
       .eq('id', id)
       .select()
       .single();
@@ -45,12 +59,37 @@ export const linkService = {
   },
 
   async getCategories() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
     const { data, error } = await supabase
       .from('categories')
       .select('*')
       .order('name');
     
     if (error) throw error;
+
+    if (!data || data.length === 0) {
+      const defaultCategories = [
+        { name: 'vestuario', user_id: user.id },
+        { name: 'eletrônicos', user_id: user.id },
+        { name: 'Automotivo', user_id: user.id },
+        { name: 'Calçado', user_id: user.id },
+        { name: 'Casa', user_id: user.id },
+        { name: 'Construção', user_id: user.id },
+        { name: 'Ferramentas', user_id: user.id },
+        { name: 'outros', user_id: user.id }
+      ];
+
+      const { data: insertedData, error: insertError } = await supabase
+        .from('categories')
+        .insert(defaultCategories)
+        .select();
+
+      if (insertError) throw insertError;
+      return (insertedData || []) as Category[];
+    }
+
     return data as Category[];
   }
 };

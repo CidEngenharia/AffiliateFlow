@@ -22,11 +22,14 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  Cell
+  Cell,
+  PieChart,
+  Pie,
+  Legend
 } from 'recharts';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { analyticsService, ClickData, LinkStats, OverviewStats } from '../services/analyticsService';
+import { analyticsService, ClickData, LinkStats, OverviewStats, DeviceStats, CountryStats } from '../services/analyticsService';
 
 const Analytics: React.FC = () => {
   const [period, setPeriod] = useState(7);
@@ -34,22 +37,28 @@ const Analytics: React.FC = () => {
   const [topLinks, setTopLinks] = useState<LinkStats[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [overview, setOverview] = useState<OverviewStats | null>(null);
+  const [deviceData, setDeviceData] = useState<DeviceStats[]>([]);
+  const [countryData, setCountryData] = useState<CountryStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [clicks, links, stats, activity] = await Promise.all([
+        const [clicks, links, stats, activity, devices, countries] = await Promise.all([
           analyticsService.getClickStats(period),
           analyticsService.getTopLinks(),
-          analyticsService.getOverviewStats(),
-          analyticsService.getRecentActivity(8)
+          analyticsService.getOverviewStats(period),
+          analyticsService.getRecentActivity(8),
+          analyticsService.getDeviceStats(period),
+          analyticsService.getCountryStats(period)
         ]);
         setClickData(clicks);
         setTopLinks(links);
         setOverview(stats);
         setRecentActivity(activity);
+        setDeviceData(devices);
+        setCountryData(countries);
       } catch (error) {
         console.error('Erro ao buscar analytics:', error);
       } finally {
@@ -78,6 +87,11 @@ const Analytics: React.FC = () => {
       </div>
     );
   }
+
+  // CTR Real
+  const ctrReal = overview.totalClicks > 0 
+    ? ((overview.totalConversions / overview.totalClicks) * 100).toFixed(1) 
+    : '0.0';
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
@@ -113,7 +127,7 @@ const Analytics: React.FC = () => {
           { label: 'Cliques Totais', value: formatNumber(overview.totalClicks), change: overview.clicksChange, icon: MousePointer2, color: 'primary' },
           { label: 'Conversões', value: overview.totalConversions, change: overview.conversionsChange, icon: Target, color: 'success' },
           { label: 'Receita Estimada', value: formatCurrency(overview.totalRevenue), change: overview.revenueChange, icon: DollarSign, color: 'warning' },
-          { label: 'ROI Médio', value: `${overview.averageROI.toFixed(1)}x`, change: overview.roiChange, icon: TrendingUp, color: 'accent' },
+          { label: 'CTR Real / ROI', value: `${ctrReal}% / ${overview.averageROI.toFixed(1)}x`, change: overview.roiChange, icon: TrendingUp, color: 'accent' },
         ].map((item, idx) => (
           <Card key={idx} className="relative overflow-hidden group hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 border-primary/5">
             <div className="flex justify-between items-start">
@@ -220,9 +234,92 @@ const Analytics: React.FC = () => {
         </Card>
       </div>
 
+      {/* Grid de Dispositivos e Geolocalizacao */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-         {/* Top Links Bar Chart */}
-         <Card title="Top Links por Performance" className="h-[450px] flex flex-col border-primary/5">
+        <Card title="Dispositivos de Acesso" className="h-[450px] flex flex-col border-primary/5">
+          <div className="flex-1 flex items-center justify-center mt-6">
+            {deviceData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={deviceData}
+                    cx="50%"
+                    cy="45%"
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                    animationDuration={1500}
+                  >
+                    {deviceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
+                      borderRadius: '16px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)'
+                    }}
+                    itemStyle={{ fontWeight: 800, color: '#1e293b' }}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36} 
+                    iconType="circle"
+                    formatter={(value, entry: any) => (
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {value}: {entry.payload.value} cliques
+                      </span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center opacity-40 py-10">
+                <Loader2 className="w-8 h-8 animate-spin mb-4 mx-auto" />
+                <p className="text-sm font-medium">Analisando dispositivos de cliques...</p>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card title="Geolocalização de Acessos" className="h-[450px] flex flex-col border-primary/5">
+          <div className="flex-1 space-y-6 mt-6 overflow-y-auto px-2">
+            {countryData.length > 0 ? (
+              countryData.map((c, i) => (
+                <div key={c.country} className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-extrabold text-primary">
+                        {i + 1}
+                      </span>
+                      <span className="font-bold">{c.country}</span>
+                    </div>
+                    <span className="text-muted-foreground font-black">{c.clicks} ({c.percentage}%)</span>
+                  </div>
+                  <div className="h-3 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-1000"
+                      style={{ width: `${c.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center opacity-40 py-10">
+                <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                <p className="text-sm font-medium">Buscando dados de geolocalização...</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Top Links Bar Chart */}
+        <Card title="Top Links por Performance" className="h-[450px] flex flex-col border-primary/5">
           <div className="flex-1 mt-6">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart layout="vertical" data={topLinks} margin={{ left: 20 }}>
@@ -255,7 +352,7 @@ const Analytics: React.FC = () => {
           </div>
         </Card>
 
-        {/* Conversion Stats */}
+        {/* Ranking de Conversão */}
         <Card className="p-0 overflow-hidden border-primary/10 border-2">
           <div className="p-6 border-b border-border bg-muted/20 flex items-center justify-between">
             <h3 className="font-extrabold text-lg flex items-center gap-2">

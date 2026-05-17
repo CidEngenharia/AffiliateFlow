@@ -57,7 +57,7 @@ const Settings: React.FC = () => {
           full_name: formData.full_name,
           username: formData.username.toLowerCase(),
           avatar_url: formData.avatar_url,
-          updated_at: new Error().toISOString() // Simples hack para o updated_at se não houver trigger
+          updated_at: new Date().toISOString() // Simples hack para o updated_at se não houver trigger
         })
         .eq('id', user.id);
 
