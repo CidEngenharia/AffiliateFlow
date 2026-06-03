@@ -311,7 +311,7 @@ const Showcase: React.FC = () => {
               Top Achadinhos <span className="text-orange-500 italic">da Semana!</span>
             </h2>
             <p className="text-muted-foreground text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] max-w-xl mx-auto leading-relaxed mb-4">
-              Produtos rastreados por Inteligência Artificial.
+              {profile.bio || 'Produtos rastreados por Inteligência Artificial.'}
             </p>
             <div className="mb-12 text-center text-xs md:text-sm text-blue-900 dark:text-blue-300 font-normal uppercase tracking-wider">
               Seja afiliado também, Conheça a{' '}
