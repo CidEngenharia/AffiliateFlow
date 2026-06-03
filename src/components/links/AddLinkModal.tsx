@@ -6,7 +6,7 @@ import Card from '../ui/Card';
 import { linkService } from '../../services/linkService';
 import type { Category } from '../../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { scrapeProduct } from '../../services/scraperService';
 
 interface AddLinkModalProps {
   isOpen: boolean;
@@ -28,7 +28,8 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
     redirect_type: '301',
     thumbnail_url: '',
     is_nofollow: true,
-    is_sponsored: true
+    is_sponsored: true,
+    is_active: true
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -69,8 +70,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
     const lowerUrl = url.toLowerCase();
     if (lowerUrl.includes('amazon.')) return 'Amazon';
     if (lowerUrl.includes('shopee.')) return 'Shopee';
-    if (lowerUrl.includes('aliexpress.')) return 'AliExpress';
-    if (lowerUrl.includes('mercadolivre.') || lowerUrl.includes('mercadolibre.')) return 'Mercado Livre';
+    if (lowerUrl.includes('magalu.') || lowerUrl.includes('magazineluiza.')) return 'Magalu';
     if (lowerUrl.includes('hotmart.')) return 'Hotmart';
     if (lowerUrl.includes('kiwify.')) return 'Kiwify';
     return 'Outra';
@@ -125,7 +125,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
     setScrapeMessage('Plataforma identificada! Alguns campos foram sugeridos.');
   };
 
-  // Realiza a raspagem inteligente automática
+  // Realiza a raspagem inteligente automatica usando ScraperAPI (100% frontend, sem backend)
   const handleAutoScrape = async (urlToScrape?: string) => {
     const targetUrl = urlToScrape || formData.original_url;
     
@@ -144,30 +144,18 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
     setLastScrapedUrl(targetUrl);
 
     try {
-      const res = await fetch(`${API_URL}/api/scrape`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: targetUrl }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Falha na resposta do servidor');
-      }
-
-      const data = await res.json();
+      const data = await scrapeProduct(targetUrl);
       
-      const hasErrorTitle = data && data.title && (
-        data.title.toLowerCase().includes('não foi possível encontrar') ||
+      const hasErrorTitle = data.title && (
+        data.title.toLowerCase().includes('nao foi possivel encontrar') ||
         data.title.toLowerCase().includes('robot check') ||
         data.title.toLowerCase().includes('captcha') ||
         data.title.toLowerCase().includes('acesso negado')
       );
       
-      const isInvalidScrape = !data || !data.success || hasErrorTitle || !data.sale_price;
+      const isInvalidScrape = !data.success || hasErrorTitle || !data.sale_price;
 
-      if (data && data.success && !isInvalidScrape) {
+      if (data.success && !isInvalidScrape) {
         setFormData(prev => ({
           ...prev,
           title: data.title || prev.title,
@@ -272,7 +260,8 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
         redirect_type: '301',
         thumbnail_url: '',
         is_nofollow: true,
-        is_sponsored: true
+        is_sponsored: true,
+        is_active: true
       });
       setDeviceRules({ mobile: '', tablet: '', desktop: '' });
       setCountryRulesList([]);
@@ -365,7 +354,6 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
                       className="w-full bg-background border border-border rounded-lg h-9 pl-9 pr-24 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50 text-foreground"
                       value={formData.original_url}
                       onChange={(e) => setFormData({...formData, original_url: e.target.value})}
-                      onBlur={() => handleAutoScrape()}
                     />
                     <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
                       <button
@@ -483,7 +471,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
                       onChange={(e) => setFormData({...formData, platform: e.target.value})}
                     >
                       <option value="" className="bg-muted">Selecione...</option>
-                      {['Shopee', 'Magalu', 'Amazon', 'Hotmart', 'Kiwify', 'AliExpress', 'Mercado Livre'].map(p => (
+                      {['Shopee', 'Magalu', 'Amazon', 'Hotmart', 'Kiwify'].map(p => (
                         <option key={p} value={p} className="bg-muted">{p}</option>
                       ))}
                     </select>

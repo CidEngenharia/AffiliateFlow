@@ -279,7 +279,7 @@ const BuscaTurbo: React.FC = () => {
               variant="primary" 
               size="md"
               className="font-bold rounded-xl shadow-lg shadow-primary/10 group overflow-hidden px-8"
-              onClick={handleSearch}
+              onClick={() => handleSearch()}
             >
               <span className="relative flex items-center gap-2">
                 LANÇAR BUSCA <Zap className="w-4 h-4 fill-white" />

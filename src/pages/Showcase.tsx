@@ -26,6 +26,16 @@ import type { Link, Profile } from '../types';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 
+const getPlatformLogo = (name: string) => {
+  const normalized = name.toLowerCase();
+  if (normalized.includes('shopee')) return '/shopee.png';
+  if (normalized.includes('amazon')) return '/Amazon.png';
+  if (normalized.includes('magalu')) return '/Magalu-1-1.png';
+  if (normalized.includes('hotmart')) return '/hotmart.png';
+  if (normalized.includes('kiwify')) return '/kiwify.png';
+  return null;
+};
+
 const Showcase: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
@@ -108,7 +118,7 @@ const Showcase: React.FC = () => {
   );
 
   // Agrupar links filtrados por plataforma
-  const platforms = ['Shopee', 'Amazon', 'Mercado Livre', 'Magalu', 'Hotmart', 'Kiwify', 'Outras'];
+  const platforms = ['Shopee', 'Amazon', 'Magalu', 'Hotmart', 'Kiwify', 'Outras'];
   
   const groupedLinks = filteredLinks.reduce((acc, link) => {
     let platform = link.platform || 'Outras';
@@ -234,10 +244,10 @@ const Showcase: React.FC = () => {
           >
             <Zap className="w-12 h-12 text-primary fill-primary mx-auto mb-6 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
             <h2 className="text-4xl md:text-6xl font-black mb-4 tracking-tighter text-foreground leading-none">
-              OFERTAS <span className="text-primary italic">EXCLUSIVAS</span>
+              Top Achadinhos <span className="text-primary italic">da Semana!</span>
             </h2>
             <p className="text-muted-foreground text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] max-w-xl mx-auto leading-relaxed mb-4">
-              Produtos validados com as melhores condições do mercado
+              Produtos rastreados por Inteligência Artificial.
             </p>
             <div className="mb-12 text-center text-xs md:text-sm text-blue-900 dark:text-blue-300 font-normal uppercase tracking-wider">
               Seja afiliado também, Conheça a{' '}
@@ -291,10 +301,20 @@ const Showcase: React.FC = () => {
                   <div className="flex items-center gap-6 mb-12">
                     <div className="flex-1 h-[1px] bg-linear-to-r from-transparent via-border to-transparent" />
                     <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-card border border-border/50 shadow-sm">
-                      <ShoppingBag className="w-5 h-5 text-primary" />
-                      <h3 className="text-xl font-black uppercase tracking-tighter text-foreground">
-                        {platformName}
-                      </h3>
+                      {getPlatformLogo(platformName) ? (
+                        <img 
+                          src={getPlatformLogo(platformName)!} 
+                          alt={platformName} 
+                          className="h-6 md:h-7 object-contain" 
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <ShoppingBag className="w-5 h-5 text-primary" />
+                          <h3 className="text-xl font-black uppercase tracking-tighter text-foreground">
+                            {platformName}
+                          </h3>
+                        </div>
+                      )}
                       <div className="w-1.5 h-1.5 bg-border rounded-full" />
                       <span className="text-[10px] text-primary font-black uppercase tracking-widest">
                         {platformLinks.length} Itens

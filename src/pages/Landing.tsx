@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Zap, 
@@ -18,13 +18,28 @@ import {
   Star,
   CheckCircle2,
   Users,
-  Megaphone
+  Megaphone,
+  ArrowUp
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Helmet } from 'react-helmet-async';
 
 const Landing: React.FC = () => {
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-[#020617] text-[#F8F9FA] overflow-x-hidden selection:bg-blue-500/30 font-sans">
       <Helmet>
@@ -119,7 +134,7 @@ const Landing: React.FC = () => {
             <img 
               src="/afiliatFlow_.png" 
               alt="AfiliateFlow IA" 
-              className="h-8 md:h-10 w-auto object-contain" 
+              className="h-10 md:h-14 w-auto object-contain" 
             />
           </div>
           
@@ -623,7 +638,7 @@ const Landing: React.FC = () => {
               <img 
                 src="/afiliatFlow_.png" 
                 alt="AfiliateFlow IA" 
-                className="h-8 w-auto object-contain" 
+                className="h-10 md:h-14 w-auto object-contain" 
               />
             </div>
             <div className="flex flex-wrap justify-center gap-8">
@@ -634,17 +649,33 @@ const Landing: React.FC = () => {
               ))}
             </div>
           </div>
-          <div className="flex flex-col md:row items-center justify-between border-t border-white/5 pt-8 gap-6">
-            <div className="text-[10px] text-white/10 font-medium uppercase tracking-[0.1em]">
-              © 2026 AFILIATEFLOW IA INC. TODOS OS DIREITOS RESERVADOS.
+          <div className="flex flex-col items-center border-t border-white/5 pt-8 gap-6">
+            <div className="flex flex-col items-center gap-1 md:gap-2 text-center">
+              <div className="text-[10px] text-gray-400 font-medium uppercase tracking-[0.1em]">
+                © 2026 AFILIATEFLOW IA INC. TODOS OS DIREITOS RESERVADOS.
+              </div>
+              <div className="text-[10px] text-purple-400 font-medium tracking-[0.1em] flex items-center justify-center gap-1.5 opacity-80">
+                <span>{'{'} cidengenharia desenvolvimento ia - sidney sales {'}'}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center justify-center gap-6">
               <span className="text-[9px] text-white/10 font-medium tracking-widest uppercase cursor-pointer hover:text-white/30 transition-colors">Termos</span>
               <span className="text-[9px] text-white/10 font-medium tracking-widest uppercase cursor-pointer hover:text-white/30 transition-colors">Privacidade</span>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Scroll to Top */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-50 p-3 bg-blue-600/80 hover:bg-blue-500 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 hover:scale-110 border border-white/10"
+          aria-label="Voltar ao topo"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 };

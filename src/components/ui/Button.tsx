@@ -3,8 +3,8 @@ import { motion, HTMLMotionProps } from 'motion/react';
 import { LucideIcon } from 'lucide-react';
 
 interface ButtonProps extends HTMLMotionProps<'button'> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'glass';
-  size?: 'sm' | 'md' | 'lg' | 'icon';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'glass' | 'premium' | 'success';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
   leftIcon?: LucideIcon;
   rightIcon?: LucideIcon;
@@ -22,7 +22,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ghost: 'bg-transparent hover:bg-accent text-foreground',
       danger: 'bg-danger text-white hover:bg-danger/90',
       glass: 'glass text-white hover:bg-white/10 border-white/10 shadow-lg shadow-black/20',
-      premium: 'bg-linear-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 shadow-lg shadow-blue-500/20'
+      premium: 'bg-linear-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 shadow-lg shadow-blue-500/20',
+      success: 'bg-success text-white hover:bg-success/90'
     };
 
     const sizes = {

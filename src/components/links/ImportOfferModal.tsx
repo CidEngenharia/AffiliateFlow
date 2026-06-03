@@ -19,7 +19,7 @@ import Card from '../ui/Card';
 import { linkService } from '../../services/linkService';
 import type { Category } from '../../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { scrapeProduct } from '../../services/scraperService';
 
 interface ImportOfferModalProps {
   isOpen: boolean;
@@ -50,24 +50,24 @@ const SUGGESTED_PRODUCTS = [
     category_slug: 'acessorios'
   },
   {
-    title: 'Console Portátil Anbernic RG35XX H Retro System',
-    original_url: 'https://aliexpress.com/item/1005006456789.html',
-    thumbnail_url: 'https://images.unsplash.com/photo-1531525645387-7f14be1bdbbd?w=500&auto=format&fit=crop&q=60',
-    platform: 'AliExpress',
-    original_price: 380.00,
-    sale_price: 289.00,
-    tags: 'retro, game, aliexpress, console',
-    category_slug: 'games'
+    title: 'Liquidificador Philips Walita ProBlend 6 Lâminas 800W',
+    original_url: 'https://www.magazineluiza.com.br/liquidificador-philips-walita',
+    thumbnail_url: 'https://images.unsplash.com/photo-1578643463396-0997cb5328c1?w=500&auto=format&fit=crop&q=60',
+    platform: 'Magalu',
+    original_price: 249.90,
+    sale_price: 189.90,
+    tags: 'cozinha, liquidificador, magalu, eletrodomestico',
+    category_slug: 'eletrodomesticos'
   },
   {
-    title: 'Smart TV 50 Polegadas 4K UHD LG Thinq AI',
-    original_url: 'https://produto.mercadolivre.com.br/MLB-356789123-smart-tv-50-lg',
-    thumbnail_url: 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=500&auto=format&fit=crop&q=60',
-    platform: 'Mercado Livre',
-    original_price: 2499.00,
-    sale_price: 2199.00,
-    tags: 'tv, smarttv, mercadolivre, eletronicos',
-    category_slug: 'eletronicos'
+    title: 'Curso Completo Copywriting de Alta Conversão',
+    original_url: 'https://hotmart.com/product/copywriting-alta-conversao',
+    thumbnail_url: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&auto=format&fit=crop&q=60',
+    platform: 'Hotmart',
+    original_price: 497.00,
+    sale_price: 297.00,
+    tags: 'curso, infoproduto, marketing, hotmart',
+    category_slug: 'cursos'
   }
 ];
 
@@ -79,6 +79,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFallback, setIsFallback] = useState(false);
 
   // Payload final do produto detectado/editado
   const [productData, setProductData] = useState({
@@ -102,6 +103,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
       setUrlInput('');
       setStep('input');
       setScanProgress(0);
+      setIsFallback(false);
       
       const fetchCategories = async () => {
         setIsLoadingCategories(true);
@@ -123,8 +125,9 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
     const lowerUrl = url.toLowerCase();
     if (lowerUrl.includes('amazon.')) return 'Amazon';
     if (lowerUrl.includes('shopee.')) return 'Shopee';
-    if (lowerUrl.includes('aliexpress.')) return 'AliExpress';
-    if (lowerUrl.includes('mercadolivre.') || lowerUrl.includes('mercadolibre.')) return 'Mercado Livre';
+    if (lowerUrl.includes('magalu.') || lowerUrl.includes('magazineluiza.')) return 'Magalu';
+    if (lowerUrl.includes('hotmart.')) return 'Hotmart';
+    if (lowerUrl.includes('kiwify.')) return 'Kiwify';
     return 'Outra';
   };
 
@@ -140,7 +143,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
       .substring(0, 18);               // Limitar tamanho
   };
 
-  // Simular a raspagem inteligente com integracao de API real
+  // Inicia a raspagem inteligente usando ScraperAPI (100% frontend, sem backend)
   const startScan = async (targetUrl: string, presetProduct?: typeof SUGGESTED_PRODUCTS[0]) => {
     if (!targetUrl && !presetProduct) return;
     
@@ -151,39 +154,24 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
     let apiResult: any = null;
     let apiError: any = null;
 
-    // Iniciar a chamada de API de raspagem em paralelo
-    const scrapePromise = fetch(`${API_URL}/api/scrape`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ url: targetUrl }),
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || 'Erro na resposta do servidor');
-        }
-        return res.json();
-      })
+    // Iniciar a chamada via ScraperAPI em paralelo com a animacao de progresso
+    const scrapePromise = scrapeProduct(targetUrl)
       .then((data) => {
         apiResult = data;
       })
       .catch((err) => {
-        console.error('Erro na raspagem real:', err);
+        console.error('Erro na raspagem via ScraperAPI:', err);
         apiError = err;
       });
 
     // Cronograma dinamico de atualizacao visual
     let currentProgress = 5;
     const interval = setInterval(() => {
-      // Avanca o progresso progressivamente ate 90%
       if (currentProgress < 90) {
         const increment = Math.floor(Math.random() * 8) + 3;
         currentProgress = Math.min(90, currentProgress + increment);
         setScanProgress(currentProgress);
         
-        // Atualizar textos de status realistas baseados no progresso
         if (currentProgress < 30) {
           setScanStatusText('Bypassando Cloudflare & restricoes de crawler...');
         } else if (currentProgress < 60) {
@@ -194,8 +182,6 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
           setScanStatusText('Finalizando tratamento de imagens com IA...');
         }
       } else {
-        // Quando chega a 90%, aguarda a conclusao da promise
-        // Se a chamada de API terminou (com sucesso ou falha), finaliza
         if (apiResult !== null || apiError !== null) {
           clearInterval(interval);
           setScanProgress(100);
@@ -203,7 +189,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
           
           setTimeout(() => {
             const hasErrorTitle = apiResult && apiResult.title && (
-              apiResult.title.toLowerCase().includes('não foi possível encontrar') ||
+              apiResult.title.toLowerCase().includes('nao foi possivel encontrar') ||
               apiResult.title.toLowerCase().includes('robot check') ||
               apiResult.title.toLowerCase().includes('captcha') ||
               apiResult.title.toLowerCase().includes('acesso negado')
@@ -212,7 +198,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
             const isInvalidScrape = !apiResult || !apiResult.success || hasErrorTitle || !apiResult.sale_price;
 
             if (apiResult && apiResult.success && !isInvalidScrape) {
-              // Sucesso na raspagem real e dados válidos
+              setIsFallback(false);
               const finalProduct = {
                 title: apiResult.title || '',
                 original_url: targetUrl,
@@ -228,7 +214,6 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
                 redirect_type: '301' as '301' | '307'
               };
               
-              // Se tiver presetProduct, tentar herdar a categoria dele caso encontre
               if (presetProduct) {
                 const foundCategory = categories.find(
                   c => c.slug.toLowerCase() === presetProduct.category_slug.toLowerCase()
@@ -241,7 +226,6 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
               setProductData(finalProduct);
               setStep('edit');
             } else {
-              // Em caso de falha, usar fallback inteligente (preset ou simulacao)
               applyFallback(targetUrl, presetProduct);
             }
           }, 500);
@@ -251,6 +235,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
   };
 
   const applyFallback = (targetUrl: string, presetProduct?: typeof SUGGESTED_PRODUCTS[0]) => {
+    setIsFallback(true);
     let finalProduct = {
       title: '',
       original_url: targetUrl,
@@ -374,7 +359,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
               <div className="space-y-3 mt-4">
                 <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">Marketplaces Suportados</div>
                 <div className="grid grid-cols-2 gap-2">
-                  {['Amazon', 'Shopee', 'AliExpress', 'Mercado Livre'].map((plat) => (
+                  {['Amazon', 'Shopee', 'Magalu', 'Hotmart', 'Kiwify'].map((plat) => (
                     <div key={plat} className="flex items-center gap-1.5 bg-background px-2 py-1 rounded-md text-[10px] text-foreground font-medium">
                       <div className="w-1 h-1 rounded-full bg-purple-500" />
                       {plat}
@@ -420,7 +405,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
                         <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input 
                           type="url"
-                          placeholder="Cole a URL da Amazon, Shopee, AliExpress ou ML..."
+                          placeholder="Cole a URL da Amazon, Shopee, Magalu, Hotmart ou Kiwify..."
                           className="w-full bg-background border border-border rounded-xl h-11 pl-10 pr-24 text-xs focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 outline-hidden transition-all text-foreground placeholder-slate-500"
                           value={urlInput}
                           onChange={(e) => setUrlInput(e.target.value)}
@@ -526,7 +511,11 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                           <span className="text-[9px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-md border border-primary/30 uppercase tracking-wider">{productData.platform}</span>
-                          <span className="text-[9px] font-bold bg-success/20 text-success px-2 py-0.5 rounded-md border border-success/30">IA Raspagem OK</span>
+                          {isFallback ? (
+                            <span className="text-[9px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-500/30">Sugestão de Rascunho</span>
+                          ) : (
+                            <span className="text-[9px] font-bold bg-success/20 text-success px-2 py-0.5 rounded-md border border-success/30">IA Raspagem OK</span>
+                          )}
                         </div>
                         <h4 className="text-xs font-bold text-foreground line-clamp-2">{productData.title}</h4>
                         <div className="flex items-center justify-center sm:justify-start gap-4">

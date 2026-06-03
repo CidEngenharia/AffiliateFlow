@@ -7,6 +7,8 @@ interface CardProps {
   isGlass?: boolean;
   noPadding?: boolean;
   hoverEffect?: boolean;
+  title?: string;
+  onClick?: () => void;
 }
 
 const Card: React.FC<CardProps> = ({ 
@@ -14,13 +16,16 @@ const Card: React.FC<CardProps> = ({
   className = '', 
   isGlass = false, 
   noPadding = false,
-  hoverEffect = true 
+  hoverEffect = true,
+  title,
+  onClick
 }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={hoverEffect ? { y: -5, transition: { duration: 0.2 } } : undefined}
+      onClick={onClick}
       className={`
         relative rounded-2xl overflow-hidden
         ${isGlass ? 'glass' : 'bg-card border border-primary/20'}
@@ -30,6 +35,7 @@ const Card: React.FC<CardProps> = ({
         ${className}
       `}
     >
+      {title && <h3 className="text-xl font-bold mb-4">{title}</h3>}
       {children}
     </motion.div>
   );
