@@ -14,6 +14,46 @@ interface AddLinkModalProps {
   onAdd: (linkData: any) => void;
 }
 
+const compressImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 600;
+        const MAX_HEIGHT = 600;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        resolve(compressedBase64);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -35,6 +75,8 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   
   // Regras de Dispositivo
@@ -95,7 +137,6 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
     let originalPrice = '199.90';
     let salePrice = '149.90';
     let tags = `${platform.toLowerCase().replace(' ', '')}, oferta, importado`;
-    let thumbnail = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60';
 
     try {
       const urlObj = new URL(targetUrl);
@@ -117,12 +158,12 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
       platform: prev.platform || platform,
       original_price: prev.original_price || originalPrice,
       sale_price: prev.sale_price || salePrice,
-      thumbnail_url: prev.thumbnail_url || thumbnail,
+      // Não preencher thumbnail_url automaticamente: o usuário deve fazer upload manual
       tags: prev.tags || tags
     }));
     
     setScrapeStatus('success');
-    setScrapeMessage('Plataforma identificada! Alguns campos foram sugeridos.');
+    setScrapeMessage('Plataforma identificada! Adicione uma imagem manualmente se desejar.');
   };
 
   // Realiza a raspagem inteligente automatica usando ScraperAPI (100% frontend, sem backend)
@@ -225,13 +266,18 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
         .filter(r => r.url && r.weight > 0)
         .map(r => ({ url: r.url, weight: Number(r.weight) }));
 
+      let finalThumbnailUrl = formData.thumbnail_url;
+      if (uploadedImages.length > 0) {
+        finalThumbnailUrl = JSON.stringify(uploadedImages);
+      }
+
       const dataToSubmit = {
         title: formData.title,
         original_url: formData.original_url,
         short_code: formData.short_code,
         tags: formData.tags,
         category_id: formData.category_id,
-        thumbnail_url: formData.thumbnail_url,
+        thumbnail_url: finalThumbnailUrl,
         expires_at: formData.expires_at || null,
         is_active: formData.is_active !== undefined ? formData.is_active : true,
         // The following fields have been added after migration is executed by the user:
@@ -263,6 +309,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
         is_sponsored: true,
         is_active: true
       });
+      setUploadedImages([]);
       setDeviceRules({ mobile: '', tablet: '', desktop: '' });
       setCountryRulesList([]);
       setLanguageRulesList([]);
@@ -489,6 +536,80 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
                       </label>
                     </div>
                   </div>
+                </div>
+                
+                {/* Upload de Imagens Manuais */}
+                <div className="space-y-3 border-t border-border pt-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">
+                      Imagens do Anúncio (Manual - Máx 3)
+                    </label>
+                    <span className="text-[9px] text-muted-foreground">
+                      {uploadedImages.length}/3 imagens
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 items-center">
+                    {/* Miniaturas de Imagens */}
+                    {uploadedImages.map((imgSrc, index) => (
+                      <div key={index} className="relative w-16 h-16 rounded-xl border border-border overflow-hidden bg-muted group">
+                        <img src={imgSrc} alt={`Visualização ${index + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setUploadedImages(uploadedImages.filter((_, i) => i !== index))}
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity duration-200 cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Botão de Upload */}
+                    {uploadedImages.length < 3 && (
+                      <label className={`w-16 h-16 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:bg-muted/45 hover:border-primary/50 transition-all ${
+                        isCompressing ? 'opacity-50 pointer-events-none' : ''
+                      }`}>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (files.length === 0) return;
+
+                            const slotsAvailable = 3 - uploadedImages.length;
+                            const filesToProcess = files.slice(0, slotsAvailable);
+
+                            setIsCompressing(true);
+                            try {
+                              const compressed = await Promise.all(
+                                filesToProcess.map(file => compressImage(file))
+                              );
+                              setUploadedImages(prev => [...prev, ...compressed]);
+                            } catch (err) {
+                              console.error('Erro ao comprimir imagens:', err);
+                            } finally {
+                              setIsCompressing(false);
+                            }
+                          }}
+                        />
+                        {isCompressing ? (
+                          <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-[8px] font-bold text-muted-foreground mt-1">Upload</span>
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
+                  {uploadedImages.length > 0 && (
+                    <p className="text-[9px] text-green-500 font-medium">
+                      Imagens comprimidas com sucesso e prontas para salvar!
+                    </p>
+                  )}
                 </div>
 
                 {/* Advanced section toggle */}

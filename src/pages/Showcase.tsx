@@ -17,7 +17,9 @@ import {
   Trophy,
   ArrowLeft,
   Search,
-  List
+  List,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
@@ -35,6 +37,66 @@ const getPlatformLogo = (name: string) => {
   if (normalized.includes('hotmart')) return '/hotmart.png';
   if (normalized.includes('kiwify')) return '/kiwify.png';
   return null;
+};
+
+const ProductImageCarousel: React.FC<{ images: string[]; title: string }> = ({ images, title }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  return (
+    <div className="w-full h-full relative group/carousel overflow-hidden bg-muted/20">
+      <img 
+        src={images[currentIndex]} 
+        alt={`${title} - Imagem ${currentIndex + 1}`} 
+        className="w-full h-full object-cover transition-all duration-500" 
+      />
+      {images.length > 1 && (
+        <>
+          {/* Indicadores inferiores */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-full">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex(i);
+                }}
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                  i === currentIndex ? 'bg-primary scale-125' : 'bg-white/60 hover:bg-white'
+                }`}
+              />
+            ))}
+          </div>
+          
+          {/* Setas de navegacao lateral */}
+          <button
+            type="button"
+            onClick={handlePrev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/50 backdrop-blur-xs text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-black/75 cursor-pointer z-10"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/50 backdrop-blur-xs text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-black/75 cursor-pointer z-10"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </>
+      )}
+    </div>
+  );
 };
 
 const Showcase: React.FC = () => {
@@ -373,11 +435,25 @@ const Showcase: React.FC = () => {
                             viewMode === 'grid' ? 'aspect-square w-full' : 'aspect-square sm:aspect-auto w-full sm:w-56 sm:h-full'
                           }`}>
                             {link.thumbnail_url ? (
-                              <img 
-                                src={link.thumbnail_url} 
-                                alt={link.title} 
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                              />
+                              (() => {
+                                try {
+                                  if (link.thumbnail_url.startsWith('[')) {
+                                    const imgs = JSON.parse(link.thumbnail_url);
+                                    if (Array.isArray(imgs) && imgs.length > 0) {
+                                      return <ProductImageCarousel images={imgs} title={link.title} />;
+                                    }
+                                  }
+                                } catch (e) {
+                                  // fallback
+                                }
+                                return (
+                                  <img 
+                                    src={link.thumbnail_url} 
+                                    alt={link.title} 
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                  />
+                                );
+                              })()
                             ) : (
                               <div className="w-full h-full flex flex-col items-center justify-center gap-3">
                                 <ShoppingBag className="w-12 h-12 text-muted-foreground/20" />
@@ -547,16 +623,30 @@ const Showcase: React.FC = () => {
 
               {/* Product Info */}
               <div className="p-6 overflow-y-auto space-y-6">
-                {/* Image Container with fixed smaller size to prevent distortion */}
-                <div className="w-full bg-muted/20 rounded-2xl p-4 flex items-center justify-center min-h-[140px]">
+                {/* Image Container - suporta array JSON de imagens */}
+                <div className="w-full bg-muted/20 rounded-2xl overflow-hidden" style={{ height: '240px' }}>
                   {selectedLink.thumbnail_url ? (
-                    <img 
-                      src={selectedLink.thumbnail_url} 
-                      alt={selectedLink.title} 
-                      className="w-20 h-20 md:w-24 md:h-24 object-contain rounded-xl bg-white p-2 shadow-sm border border-border/30"
-                    />
+                    (() => {
+                      try {
+                        if (selectedLink.thumbnail_url.startsWith('[')) {
+                          const imgs = JSON.parse(selectedLink.thumbnail_url);
+                          if (Array.isArray(imgs) && imgs.length > 0) {
+                            return <ProductImageCarousel images={imgs} title={selectedLink.title} />;
+                          }
+                        }
+                      } catch (e) {
+                        // fallback para img simples
+                      }
+                      return (
+                        <img 
+                          src={selectedLink.thumbnail_url} 
+                          alt={selectedLink.title} 
+                          className="w-full h-full object-contain bg-white p-4"
+                        />
+                      );
+                    })()
                   ) : (
-                    <div className="h-32 flex flex-col items-center justify-center gap-3">
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3">
                       <ShoppingBag className="w-10 h-10 text-muted-foreground/20" />
                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Sem imagem</span>
                     </div>

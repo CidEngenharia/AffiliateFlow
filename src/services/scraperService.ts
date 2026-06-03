@@ -246,9 +246,8 @@ function extractImage(doc: Document, platform: string): string {
     lowerThumb.includes('arrow_left') ||
     lowerThumb.includes('arrow_right');
 
-  return isBadImage
-    ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60'
-    : imageUrl;
+  // Se a imagem não for válida, retornar string vazia (sem imagem genérica)
+  return isBadImage ? '' : imageUrl;
 }
 
 function extractPrices(

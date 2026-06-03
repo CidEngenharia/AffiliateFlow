@@ -274,7 +274,6 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
       let originalPrice = '199.90';
       let salePrice = '149.90';
       let tags = `${platform.toLowerCase().replace(' ', '')}, oferta, importado`;
-      let thumbnail = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60';
 
       try {
         const urlObj = new URL(targetUrl);
@@ -295,7 +294,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
         platform,
         original_price: originalPrice,
         sale_price: salePrice,
-        thumbnail_url: thumbnail,
+        thumbnail_url: '', // sem imagem genérica; usuário pode adicionar manualmente
         tags,
         short_code: generateShortCode(title)
       };
