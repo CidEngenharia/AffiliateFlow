@@ -16,7 +16,8 @@ import {
   X,
   Trophy,
   ArrowLeft,
-  Search
+  Search,
+  List
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
@@ -45,6 +46,7 @@ const Showcase: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedLink, setSelectedLink] = useState<Link | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     const fetchShowcaseData = async () => {
@@ -244,7 +246,7 @@ const Showcase: React.FC = () => {
           >
             <Zap className="w-12 h-12 text-primary fill-primary mx-auto mb-6 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
             <h2 className="text-4xl md:text-6xl font-black mb-4 tracking-tighter text-foreground leading-none">
-              Top Achadinhos <span className="text-primary italic">da Semana!</span>
+              Top Achadinhos <span className="text-orange-500 italic">da Semana!</span>
             </h2>
             <p className="text-muted-foreground text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] max-w-xl mx-auto leading-relaxed mb-4">
               Produtos rastreados por Inteligência Artificial.
@@ -290,6 +292,35 @@ const Showcase: React.FC = () => {
 
       {/* Categorized Links Grid */}
       <div className="max-w-5xl mx-auto px-6 py-12 relative z-10">
+        {Object.keys(groupedLinks).length > 0 && (
+          <div className="flex justify-between items-center mb-10 border-b border-border/20 pb-6">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Vitrine de Ofertas</h3>
+            <div className="flex items-center gap-1 bg-muted/40 border border-border/40 rounded-xl p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-all duration-200 cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-background text-foreground shadow-xs border border-border/20'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Visualização em Grade"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-lg transition-all duration-200 cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-background text-foreground shadow-xs border border-border/20'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Visualização em Lista"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
         {Object.keys(groupedLinks).length > 0 ? (
           <div className="space-y-24">
             {platforms.map(platformName => {
@@ -305,7 +336,7 @@ const Showcase: React.FC = () => {
                         <img 
                           src={getPlatformLogo(platformName)!} 
                           alt={platformName} 
-                          className="h-6 md:h-7 object-contain" 
+                          className="h-10 md:h-12 object-contain" 
                         />
                       ) : (
                         <div className="flex items-center gap-2">
@@ -323,7 +354,7 @@ const Showcase: React.FC = () => {
                     <div className="flex-1 h-[1px] bg-linear-to-r from-transparent via-border to-transparent" />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "flex flex-col gap-6"}>
                     {platformLinks.map((link, idx) => (
                       <motion.div 
                         key={link.id}
@@ -334,9 +365,13 @@ const Showcase: React.FC = () => {
                       >
                         <Card 
                           onClick={() => setSelectedLink(link)}
-                          className="h-full flex flex-col p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 bg-card group rounded-3xl cursor-pointer"
+                          className={`p-0 overflow-hidden border border-border/50 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 bg-card group rounded-3xl cursor-pointer flex ${
+                            viewMode === 'grid' ? 'flex-col h-full' : 'flex-col sm:flex-row h-auto sm:h-56'
+                          }`}
                         >
-                          <div className="aspect-square relative overflow-hidden bg-muted/20">
+                          <div className={`relative overflow-hidden bg-muted/20 shrink-0 ${
+                            viewMode === 'grid' ? 'aspect-square w-full' : 'aspect-square sm:aspect-auto w-full sm:w-56 sm:h-full'
+                          }`}>
                             {link.thumbnail_url ? (
                               <img 
                                 src={link.thumbnail_url} 
@@ -370,61 +405,67 @@ const Showcase: React.FC = () => {
                             )}
                           </div>
 
-                          <div className="p-6 flex-1 flex flex-col">
-                            <h4 className="font-bold text-sm md:text-base line-clamp-2 mb-2 min-h-[3rem] group-hover:text-primary transition-colors leading-snug">
-                              {link.title}
-                            </h4>
+                          <div className="p-6 flex-1 flex flex-col justify-between">
+                            <div>
+                              <h4 className={`font-bold text-sm md:text-base line-clamp-2 mb-2 ${viewMode === 'grid' ? 'min-h-[3rem]' : ''} group-hover:text-primary transition-colors leading-snug`}>
+                                {link.title}
+                              </h4>
 
-                            <div className="flex items-center gap-1 mb-4">
-                              {renderStars(link.rating)}
-                              <span className="text-[10px] text-muted-foreground ml-1 font-bold">(5.0)</span>
+                              <div className="flex items-center gap-1 mb-4">
+                                {renderStars(link.rating)}
+                                <span className="text-[10px] text-muted-foreground ml-1 font-bold">(5.0)</span>
+                              </div>
                             </div>
                             
-                            <div className="mt-auto space-y-6">
-                              <div className="flex items-end justify-between gap-4">
-                                <div className="flex flex-col gap-1">
-                                  {link.original_price && (
-                                    <span className="text-[10px] text-muted-foreground line-through font-bold uppercase tracking-widest opacity-60">
-                                      De R$ {link.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            <div className={`flex ${
+                              viewMode === 'grid' 
+                                ? 'flex-col gap-6 mt-auto' 
+                                : 'flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mt-auto sm:gap-6'
+                            }`}>
+                              <div className="flex flex-col gap-1">
+                                {link.original_price && (
+                                  <span className="text-[10px] text-muted-foreground line-through font-bold uppercase tracking-widest opacity-60">
+                                    De R$ {link.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </span>
+                                )}
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-xs font-black text-primary">R$</span>
+                                    <span className="text-3xl font-black text-foreground tracking-tighter">
+                                      {(link.sale_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </span>
-                                  )}
-                                  <div className="flex items-center gap-3">
-                                    <div className="flex items-baseline gap-1">
-                                      <span className="text-xs font-black text-primary">R$</span>
-                                      <span className="text-3xl font-black text-foreground tracking-tighter">
-                                        {(link.sale_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                      </span>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-1 ml-2 self-end mb-1">
-                                      <button 
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleCopyLink(link);
-                                        }}
-                                        className="p-1 rounded-md text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                                        title="Copiar Link"
-                                      >
-                                        {copiedId === link.id ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                                      </button>
-                                      <button 
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleShareProduct(link);
-                                        }}
-                                        className="p-1 rounded-md text-muted-foreground hover:text-green-500 transition-colors cursor-pointer"
-                                        title="Compartilhar no WhatsApp"
-                                      >
-                                        <MessageCircle className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-1 ml-2 self-end mb-1">
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCopyLink(link);
+                                      }}
+                                      className="p-1 rounded-md text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                                      title="Copiar Link"
+                                    >
+                                      {copiedId === link.id ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                    </button>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleShareProduct(link);
+                                      }}
+                                      className="p-1 rounded-md text-muted-foreground hover:text-green-500 transition-colors cursor-pointer"
+                                      title="Compartilhar no WhatsApp"
+                                    >
+                                      <MessageCircle className="w-3.5 h-3.5" />
+                                    </button>
                                   </div>
                                 </div>
                               </div>
 
                               <Button 
                                 variant="primary" 
-                                className="w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/25 group/btn relative overflow-hidden"
+                                className={`h-14 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/25 group/btn relative overflow-hidden ${
+                                  viewMode === 'grid' ? 'w-full' : 'w-full sm:w-fit sm:px-8'
+                                }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   window.open(`${window.location.origin}/go/${link.short_code}`, '_blank');
