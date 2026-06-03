@@ -239,7 +239,7 @@ const BuscaTurbo: React.FC = () => {
         {/* Trends + Filtros Rápidos */}
         <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">🔥 Em Alta:</span>
-          {['Ofertas Relâmpago', 'Cozinha Inteligente', 'Setup Gamer 2024', 'Beleza Coreana', 'Promo Shopee'].map((trend) => (
+          {['Ofertas Relâmpago', 'Promo Shopee'].map((trend) => (
             <button
               key={trend}
               onClick={() => setQuery(trend)}
@@ -250,40 +250,16 @@ const BuscaTurbo: React.FC = () => {
           ))}
           <div className="w-px h-4 bg-border/60 mx-1" />
           <button
-            onClick={() => setSelectedPlatforms(['google', 'github', 'reddit'])}
-            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
-          >
-            Tudo
-          </button>
-          <button
-            onClick={() => setSelectedPlatforms(['shopee', 'amazon', 'magalu'])}
-            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
-          >
-            Shopping
-          </button>
-          <button
             onClick={() => setSelectedPlatforms(['google', 'bing'])}
             className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
           >
             Imagens
           </button>
           <button
-            onClick={() => setSelectedPlatforms(['google', 'bing'])}
-            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
-          >
-            Notícias
-          </button>
-          <button
             onClick={() => setSelectedPlatforms(['youtube'])}
             className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
           >
             Vídeos
-          </button>
-          <button
-            onClick={() => setSelectedPlatforms(['google', 'duckduckgo'])}
-            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
-          >
-            Web
           </button>
         </div>
       </div>
