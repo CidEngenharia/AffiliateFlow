@@ -198,17 +198,15 @@ const BuscaTurbo: React.FC = () => {
         {/* Nota sobre Navegadores */}
         <button
           onClick={() => {
-            const el = document.getElementById('gerenciamento-abas');
+            const el = document.getElementById('console-popups');
             if (el) {
               el.scrollIntoView({ behavior: 'smooth' });
             }
           }}
-          className="mt-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 max-w-2xl mx-auto flex items-center justify-center gap-3 w-full hover:bg-green-500/20 transition-all cursor-pointer"
+          className="mt-4 text-green-500 hover:text-green-400 transition-colors text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-3 mx-auto cursor-pointer"
         >
-          <p className="text-green-500 text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-3">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Se seu navegador bloquear a abertura das abas , clique aqui.
-          </p>
+          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          Se seu navegador bloquear a abertura das abas , clique aqui.
         </button>
 
         {/* Trends Section - New Premium Feature */}
@@ -324,7 +322,7 @@ const BuscaTurbo: React.FC = () => {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <Card className="p-4 border-primary/20 bg-muted/5 relative overflow-hidden group mb-8">
+            <Card id="console-popups" className="p-4 border-primary/20 bg-muted/5 relative overflow-hidden group mb-8">
               <div className="absolute inset-0 bg-linear-to-r from-muted/10 to-transparent opacity-30" />
               <div className="relative">
                 <div className="flex items-center justify-between mb-6">
@@ -333,7 +331,7 @@ const BuscaTurbo: React.FC = () => {
                       <Zap className="text-primary w-6 h-6 animate-pulse" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-base tracking-tight">Console de Lançamento</h3>
+                      <h3 className="font-bold text-base tracking-tight">Console de pop-up bloqeuados</h3>
                       <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Verifique as abas abertas ou abra manualmente as bloqueadas</p>
                     </div>
                   </div>
