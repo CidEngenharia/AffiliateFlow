@@ -222,64 +222,6 @@ const BuscaTurbo: React.FC = () => {
           </div>
         </div>
 
-        {/* Linha de Categorias estilo Google */}
-        <div className="flex flex-wrap items-center justify-between max-w-2xl mx-auto mt-4 px-4 border-b border-border/40 pb-2 text-xs md:text-sm text-muted-foreground/80">
-          <div className="flex items-center gap-5 overflow-x-auto no-scrollbar scroll-smooth">
-            <button 
-              onClick={handleRefine}
-              disabled={isRefining || !query}
-              className="flex items-center gap-1 hover:text-primary font-bold py-1 transition-colors relative"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              Modo IA
-            </button>
-            <button 
-              onClick={() => setSelectedPlatforms(['google', 'github', 'reddit'])}
-              className="hover:text-primary font-bold py-1 transition-colors"
-            >
-              Tudo
-            </button>
-            <button 
-              onClick={() => setSelectedPlatforms(['shopee', 'amazon', 'magalu'])}
-              className="hover:text-primary font-bold py-1 transition-colors"
-            >
-              Shopping
-            </button>
-            <button 
-              onClick={() => setSelectedPlatforms(['google', 'bing'])}
-              className="hover:text-primary font-bold py-1 transition-colors"
-            >
-              Imagens
-            </button>
-            <button 
-              onClick={() => setSelectedPlatforms(['google', 'bing'])}
-              className="hover:text-primary font-bold py-1 transition-colors"
-            >
-              Notícias
-            </button>
-            <button 
-              onClick={() => setSelectedPlatforms(['youtube', 'tiktok'])}
-              className="hover:text-primary font-bold py-1 transition-colors"
-            >
-              Vídeos curtos
-            </button>
-            <button 
-              onClick={() => setSelectedPlatforms(['google', 'duckduckgo'])}
-              className="hover:text-primary font-bold py-1 transition-colors"
-            >
-              Web
-            </button>
-            <button className="hover:text-primary font-bold py-1 transition-colors flex items-center gap-0.5">
-              Mais
-            </button>
-          </div>
-          <div className="flex items-center">
-            <button className="hover:text-primary font-bold py-1 transition-colors flex items-center gap-1">
-              Ferramentas
-            </button>
-          </div>
-        </div>
-
         {/* Nota sobre Navegadores */}
         <button
           onClick={() => {
@@ -294,7 +236,7 @@ const BuscaTurbo: React.FC = () => {
           Se seu navegador bloquear a abertura das abas , clique aqui.
         </button>
 
-        {/* Trends Section - New Premium Feature */}
+        {/* Trends + Filtros Rápidos */}
         <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">🔥 Em Alta:</span>
           {['Ofertas Relâmpago', 'Cozinha Inteligente', 'Setup Gamer 2024', 'Beleza Coreana', 'Promo Shopee'].map((trend) => (
@@ -306,6 +248,43 @@ const BuscaTurbo: React.FC = () => {
               {trend}
             </button>
           ))}
+          <div className="w-px h-4 bg-border/60 mx-1" />
+          <button
+            onClick={() => setSelectedPlatforms(['google', 'github', 'reddit'])}
+            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
+          >
+            Tudo
+          </button>
+          <button
+            onClick={() => setSelectedPlatforms(['shopee', 'amazon', 'magalu'])}
+            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
+          >
+            Shopping
+          </button>
+          <button
+            onClick={() => setSelectedPlatforms(['google', 'bing'])}
+            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
+          >
+            Imagens
+          </button>
+          <button
+            onClick={() => setSelectedPlatforms(['google', 'bing'])}
+            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
+          >
+            Notícias
+          </button>
+          <button
+            onClick={() => setSelectedPlatforms(['youtube'])}
+            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
+          >
+            Vídeos
+          </button>
+          <button
+            onClick={() => setSelectedPlatforms(['google', 'duckduckgo'])}
+            className="px-3 py-1.5 rounded-full bg-accent/50 hover:bg-primary/20 border border-border/50 text-[10px] font-bold transition-all"
+          >
+            Web
+          </button>
         </div>
       </div>
 
