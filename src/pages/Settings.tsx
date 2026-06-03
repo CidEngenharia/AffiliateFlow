@@ -1,4 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
+const compressImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 400;
+        const MAX_HEIGHT = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        resolve(compressedBase64);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
 import { 
   User, 
   Mail, 
@@ -21,6 +61,7 @@ const Settings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'showcase'>('profile');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -28,6 +69,21 @@ const Settings: React.FC = () => {
     avatar_url: '',
     bio: ''
   });
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await compressImage(file);
+      setFormData(prev => ({ ...prev, avatar_url: compressed }));
+    } catch (err) {
+      console.error('Erro ao comprimir imagem:', err);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
 
   useEffect(() => {
     if (profile) {
@@ -131,8 +187,8 @@ const Settings: React.FC = () => {
                 <div className="space-y-6">
                   {/* Avatar Section */}
                   <div className="flex items-center gap-6 pb-6 border-b border-border">
-                    <div className="relative">
-                      <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-bold overflow-hidden border-2 border-primary/20">
+                    <div className="relative cursor-pointer" onClick={triggerFileInput}>
+                      <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-bold overflow-hidden border-2 border-primary/20 hover:opacity-85 transition-opacity">
                         {formData.avatar_url ? (
                           <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
@@ -141,11 +197,22 @@ const Settings: React.FC = () => {
                       </div>
                       <button 
                         type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerFileInput();
+                        }}
                         className="absolute -bottom-1 -right-1 p-1.5 bg-primary text-white rounded-full border-2 border-background shadow-lg hover:scale-110 transition-transform"
                       >
                         <Camera size={14} />
                       </button>
                     </div>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileChange} 
+                      accept="image/*" 
+                      className="hidden" 
+                    />
                     <div>
                       <h3 className="font-bold">Sua Foto</h3>
                       <p className="text-xs text-muted-foreground mt-1">
