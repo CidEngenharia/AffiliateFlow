@@ -4,6 +4,7 @@ export type Profile = {
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
   last_activity_at: string;
   plan_type: 'free' | 'pro' | 'enterprise';
   subscription_status: 'active' | 'inactive' | 'trialing' | 'past_due';

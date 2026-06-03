@@ -19,7 +19,8 @@ import {
   CheckCircle2,
   Users,
   Megaphone,
-  ArrowUp
+  ArrowUp,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
@@ -584,11 +585,206 @@ const Landing: React.FC = () => {
 
               </div>
             </motion.div>
-          </div>
-        </section>
+      </div>
+    </section>
 
-        {/* CTA Section */}
-        <section className="py-40 px-6">
+    {/* Pricing Section */}
+    <section id="precos" className="py-24 px-6 relative border-t border-white/5 bg-[#020617]/30">
+      <div className="max-w-6xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#EE4D2D]/10 border border-[#EE4D2D]/20 text-[#EE4D2D] mb-4">
+            <Star className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em]">Planos de Acesso</span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
+            <span style={{
+              background: 'linear-gradient(90deg, #ffffff 0%, #ffedd5 50%, #fed7aa 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>
+              Escolha o plano perfeito para você
+            </span>
+          </h2>
+          <p className="text-sm text-slate-400 max-w-xl mx-auto">
+            Seja você iniciante ou um afiliado profissional em busca de escala agressiva com comissões turbo.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-3 gap-8 items-stretch max-w-5xl mx-auto">
+          
+          {/* Plano Free */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="relative rounded-3xl bg-slate-950/60 backdrop-blur-xl border border-white/5 p-8 flex flex-col justify-between hover:border-[#EE4D2D]/20 transition-all duration-300 group"
+          >
+            <div>
+              <div className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Free</div>
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-4xl font-extrabold text-white">R$ 0,00</span>
+                <span className="text-xs text-slate-400">/mês</span>
+              </div>
+              
+              <div className="w-full h-px bg-white/5 my-6" />
+              
+              <ul className="space-y-4">
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Vitrine de ofertas inclusa</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>5 links por plataforma</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Até 5 links cadastrados /mês</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-500 line-through">
+                  <X className="w-4 h-4 text-rose-500/70 shrink-0 mt-0.5" />
+                  <span>Sem buscador turbo</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-500 line-through">
+                  <X className="w-4 h-4 text-rose-500/70 shrink-0 mt-0.5" />
+                  <span>Sem analytics de cliques</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-500 line-through">
+                  <X className="w-4 h-4 text-rose-500/70 shrink-0 mt-0.5" />
+                  <span>Sem campanhas e automações</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="mt-8">
+              <Link to="/login">
+                <button className="w-full py-3 px-4 rounded-xl border border-white/10 hover:border-[#EE4D2D]/40 text-xs font-bold uppercase tracking-widest text-white hover:bg-white/5 transition-all">
+                  Começar grátis
+                </button>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Plano Profissional */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="relative rounded-3xl bg-slate-950/80 backdrop-blur-xl border border-[#EE4D2D]/30 p-8 flex flex-col justify-between hover:border-[#EE4D2D]/60 transition-all duration-300 group shadow-lg shadow-[#EE4D2D]/5"
+          >
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#EE4D2D] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+              MAIS POPULAR
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[#EE4D2D] uppercase tracking-widest mb-2">Profissional</div>
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-4xl font-extrabold text-white">R$ 19,99</span>
+                <span className="text-xs text-slate-400">/mês</span>
+              </div>
+              
+              <div className="w-full h-px bg-white/5 my-6" />
+              
+              <ul className="space-y-4">
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Buscador Turbo AI incluso</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>10 links /mês por plataforma</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Vitrine de ofertas inclusa</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-500 line-through">
+                  <X className="w-4 h-4 text-rose-500/70 shrink-0 mt-0.5" />
+                  <span>Sem analytics de cliques</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-500 line-through">
+                  <X className="w-4 h-4 text-rose-500/70 shrink-0 mt-0.5" />
+                  <span>Sem campanhas e automações</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="mt-8">
+              <Link to="/login">
+                <button className="w-full py-3.5 px-4 rounded-xl bg-[#EE4D2D] hover:bg-[#ff5a36] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md active:scale-95">
+                  Assinar profissional
+                </button>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Plano Premium (Plano Turbo Afiliado) */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="relative rounded-3xl bg-slate-950/60 backdrop-blur-xl border border-white/5 p-8 flex flex-col justify-between hover:border-[#ff9f43]/45 transition-all duration-300 group"
+          >
+            <div>
+              <div className="text-sm font-bold text-amber-500 uppercase tracking-widest mb-2">Premium</div>
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-4xl font-extrabold text-white">R$ 29,99</span>
+                <span className="text-xs text-slate-400">/mês</span>
+              </div>
+              
+              <div className="w-full h-px bg-white/5 my-6" />
+              
+              <ul className="space-y-4">
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="font-semibold text-amber-400">Todas as funções inclusas</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Buscador Turbo AI completo</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Analytics & monitoramento em tempo real</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Campanhas & automações</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Vitrine de ofertas com links ilimitados</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Suporte prioritário via WhatsApp</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="mt-8">
+              <Link to="/login">
+                <button className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#EE4D2D] hover:from-orange-400 hover:to-[#ff5a36] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md active:scale-95">
+                  Obter plano turbo
+                </button>
+              </Link>
+            </div>
+          </motion.div>
+
+        </div>
+      </div>
+    </section>
+
+    {/* CTA Section */}
+    <section className="py-40 px-6">
           <div className="max-w-6xl mx-auto relative group">
             {/* Glow de fundo */}
             <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-purple-600 rounded-[4rem] blur opacity-20 group-hover:opacity-40 transition duration-1000" />

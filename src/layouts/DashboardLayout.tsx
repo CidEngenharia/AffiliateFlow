@@ -15,11 +15,14 @@ import {
   Bell,
   Wand2,
   SearchCode,
-  LayoutGrid
+  LayoutGrid,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import Button from '../components/ui/Button';
 
 interface SidebarItemProps {
@@ -50,6 +53,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { profile, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { id: 'busca-turbo', icon: SearchCode, label: 'Busca Turbo AI', path: '/busca-turbo' },
@@ -135,40 +139,71 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Header Mobile & Topbar */}
-        <header className="h-16 flex items-center justify-between px-6 bg-card border-b border-border z-10">
+        <header className="h-16 flex items-center justify-between px-6 z-10 text-white" style={{ backgroundColor: '#EE4D2D' }}>
           <div className="flex items-center">
             <button 
-              className="md:hidden p-2 -ml-2 mr-2 rounded-lg hover:bg-accent"
+              className="md:hidden p-2 -ml-2 mr-2 rounded-lg hover:bg-white/10"
               onClick={() => setMobileOpen(true)}
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-6 h-6 text-white" />
             </button>
-            <h2 className="font-semibold text-lg capitalize">{activeTab}</h2>
+            <h2 className="font-semibold text-lg capitalize text-white">{activeTab}</h2>
           </div>
 
           <div className="flex items-center space-x-4">
             {/* Nome e Status Simples */}
             <div className="hidden sm:flex items-center space-x-2 mr-2">
               <div className="flex flex-col items-end">
-                <span className="text-sm font-bold text-foreground leading-none">{profile?.full_name || 'Usuário'}</span>
+                <span className="text-sm font-bold text-white leading-none">{profile?.full_name || 'Usuário'}</span>
                 <div className="flex items-center space-x-1.5 mt-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                  <span className="text-[10px] text-green-500 font-black uppercase tracking-widest">Online</span>
+                  <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                  <span className="text-[10px] text-green-200 font-black uppercase tracking-widest">Online</span>
                 </div>
               </div>
             </div>
 
-            <button className="p-2 rounded-lg hover:bg-accent relative">
-              <Bell className="w-5 h-5 text-muted-foreground" />
+            {/* Botão Dark / Light Mode */}
+            <button
+              onClick={toggleTheme}
+              className="relative p-2 rounded-xl border border-white/20 hover:bg-white/10 transition-all duration-300 group"
+              title={theme === 'dark' ? 'Mudar para Light Mode' : 'Mudar para Dark Mode'}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {theme === 'dark' ? (
+                  <motion.div
+                    key="sun"
+                    initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Sun className="w-5 h-5 text-amber-300 group-hover:text-amber-200" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="moon"
+                    initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Moon className="w-5 h-5 text-white group-hover:text-white/80" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </button>
+
+            <button className="p-2 rounded-lg hover:bg-white/10 relative">
+              <Bell className="w-5 h-5 text-white" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full" />
             </button>
-            <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-danger" onClick={signOut}>
+            <Button variant="ghost" size="sm" className="hidden sm:flex text-white hover:text-white/80 hover:bg-white/10" onClick={signOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Sair
             </Button>
-            <div className="h-8 w-px bg-border mx-2 hidden sm:block" />
-            <Button variant="primary" size="sm" className="hidden sm:flex">
-              <Zap className="w-4 h-4 mr-2" />
+            <div className="h-8 w-px bg-white/20 mx-2 hidden sm:block" />
+            <Button variant="outline" size="sm" className="hidden sm:flex text-white border-white/30 hover:bg-white/10">
+              <Zap className="w-4 h-4 mr-2 text-white fill-white" />
               Upgrade PRO
             </Button>
           </div>

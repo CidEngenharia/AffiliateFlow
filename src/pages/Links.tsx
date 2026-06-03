@@ -24,6 +24,7 @@ const Links: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [linkToEdit, setLinkToEdit] = useState<Link | null>(null);
   const [links, setLinks] = useState<Link[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +55,6 @@ const Links: React.FC = () => {
 
   const handleAddLink = async (formData: any) => {
     try {
-      // Processar tags de string para array se necessário
       const tagsArray = typeof formData.tags === 'string' 
         ? formData.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t !== '')
         : formData.tags;
@@ -67,11 +67,22 @@ const Links: React.FC = () => {
       });
       
       setIsModalOpen(false);
-      fetchLinks(); // Recarregar a lista
+      fetchLinks();
     } catch (err: any) {
       console.error('Erro ao criar link:', err);
       alert('Erro ao criar link: ' + (err.message || 'Erro desconhecido'));
     }
+  };
+
+  const handleEditLink = (link: Link) => {
+    setLinkToEdit(link);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setLinkToEdit(null);
+    fetchLinks();
   };
 
   const handleImportOffer = async (formData: any) => {
@@ -117,8 +128,9 @@ const Links: React.FC = () => {
 
       <AddLinkModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={handleCloseModal} 
         onAdd={handleAddLink}
+        linkToEdit={linkToEdit}
       />
 
       <ImportOfferModal
@@ -187,7 +199,7 @@ const Links: React.FC = () => {
             : 'flex flex-col gap-4'}
         `}>
           {filteredLinks.map((link) => (
-            <LinkCard key={link.id} link={link} onDelete={fetchLinks} onUpdate={fetchLinks} />
+            <LinkCard key={link.id} link={link} onDelete={fetchLinks} onUpdate={fetchLinks} onEdit={handleEditLink} />
           ))}
         </div>
       ) : (

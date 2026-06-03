@@ -95,48 +95,36 @@ const Campaigns: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           <Card className="p-6 border-primary/20">
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              {/* Seletor compacto de plataformas */}
+              <div className="flex items-center gap-1.5 p-1 bg-muted/40 border border-border/80 rounded-xl w-fit">
+                <button
+                  type="button"
                   onClick={() => setPlatform('whatsapp')}
-                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 relative overflow-hidden ${
-                    platform === 'whatsapp' 
-                    ? 'border-emerald-500 bg-emerald-500/5 shadow-lg shadow-emerald-500/10' 
-                    : 'border-border hover:border-emerald-500/20'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 cursor-pointer ${
+                    platform === 'whatsapp'
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                 >
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${
-                    platform === 'whatsapp' ? 'bg-emerald-500 scale-110 shadow-lg' : 'bg-muted scale-100'
-                  }`}>
+                  <div className="w-4 h-4 shrink-0 flex items-center justify-center">
                     <WhatsAppIcon />
                   </div>
-                  <span className={`font-bold transition-colors ${platform === 'whatsapp' ? 'text-emerald-500' : 'text-muted-foreground'}`}>WhatsApp</span>
-                  {platform === 'whatsapp' && (
-                    <motion.div layoutId="active-platform" className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500" />
-                  )}
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  <span>WhatsApp</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setPlatform('telegram')}
-                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 relative overflow-hidden ${
-                    platform === 'telegram' 
-                    ? 'border-sky-500 bg-sky-500/5 shadow-lg shadow-sky-500/10' 
-                    : 'border-border hover:border-sky-500/20'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 cursor-pointer ${
+                    platform === 'telegram'
+                      ? 'bg-sky-500 text-white shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                 >
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${
-                    platform === 'telegram' ? 'bg-sky-500 scale-110 shadow-lg' : 'bg-muted scale-100'
-                  }`}>
+                  <div className="w-4 h-4 shrink-0 flex items-center justify-center text-sky-500">
                     <TelegramIcon />
                   </div>
-                  <span className={`font-bold transition-colors ${platform === 'telegram' ? 'text-sky-500' : 'text-muted-foreground'}`}>Telegram</span>
-                  {platform === 'telegram' && (
-                    <motion.div layoutId="active-platform" className="absolute top-2 right-2 w-2 h-2 rounded-full bg-sky-500" />
-                  )}
-                </motion.button>
+                  <span>Telegram</span>
+                </button>
               </div>
 
               <div className="space-y-4">
@@ -178,47 +166,36 @@ const Campaigns: React.FC = () => {
                 </div>
               )}
 
-              <Button 
-                variant="primary" 
-                className="w-full py-8 text-xl font-black tracking-widest uppercase relative overflow-hidden group"
-                onClick={handleSend}
-                disabled={isSending || (status?.type === 'success')}
-              >
-                <AnimatePresence mode="wait">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-muted/20 border border-border rounded-2xl">
+                <div className="flex flex-col text-left">
+                  <span className="text-sm font-bold text-foreground">Disparo Automático</span>
+                  <span className="text-xs text-muted-foreground">Inicia o disparo da campanha via {platform === 'whatsapp' ? 'WhatsApp' : 'Telegram'} para o público selecionado.</span>
+                </div>
+                <Button 
+                  variant="primary" 
+                  size="sm"
+                  className="rounded-xl px-5 h-11 flex items-center gap-2 text-xs uppercase tracking-wider font-bold shrink-0 w-full sm:w-auto"
+                  onClick={handleSend}
+                  disabled={isSending || (status?.type === 'success')}
+                >
                   {isSending ? (
-                    <motion.div 
-                      key="loading"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="flex items-center gap-3"
-                    >
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      PROCESSANDO...
-                    </motion.div>
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processando...
+                    </>
                   ) : status?.type === 'success' ? (
-                    <motion.div 
-                      key="success"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="flex items-center gap-3 text-white"
-                    >
-                      <CheckCircle2 className="w-7 h-7" />
-                      ENVIADO COM SUCESSO!
-                    </motion.div>
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Enviado
+                    </>
                   ) : (
-                    <motion.div 
-                      key="idle"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex items-center gap-3"
-                    >
-                      DISPARAR PARA {platform === 'whatsapp' ? 'WHATSAPP' : 'TELEGRAM'}
-                      <Send className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    </motion.div>
+                    <>
+                      <Send className="w-4 h-4" />
+                      Disparar Campanha
+                    </>
                   )}
-                </AnimatePresence>
-              </Button>
+                </Button>
+              </div>
             </div>
           </Card>
         </div>

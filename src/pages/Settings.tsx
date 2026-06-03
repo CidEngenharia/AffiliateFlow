@@ -104,10 +104,10 @@ const Settings: React.FC = () => {
     setMessage(null);
 
     try {
-      // Validar username (apenas letras, números e underscores)
-      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      // Validar username (letras, números, underscores, hífens e pontos)
+      const usernameRegex = /^[a-zA-Z0-9_.\-]+$/;
       if (formData.username && !usernameRegex.test(formData.username)) {
-        throw new Error('O nome de usuário deve conter apenas letras, números e underscores.');
+        throw new Error('O nome de usuário deve conter apenas letras, números, underscores, hífens e pontos.');
       }
 
       const { error } = await supabase
@@ -257,7 +257,7 @@ const Settings: React.FC = () => {
                         <input 
                           required
                           type="text" 
-                          placeholder="Ex: joaosilva" 
+                          placeholder="Ex: joao.silva ou joao-silva" 
                           className="w-full bg-primary/5 border border-primary/20 rounded-xl h-11 pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-hidden transition-all font-medium"
                           value={formData.username}
                           onChange={(e) => setFormData({...formData, username: e.target.value})}

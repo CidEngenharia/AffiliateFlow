@@ -20,7 +20,9 @@ import {
   Check,
   X,
   Mic,
-  Camera
+  Camera,
+  Gauge,
+  ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Card from '../components/ui/Card';
@@ -168,8 +170,9 @@ const BuscaTurbo: React.FC = () => {
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
       {/* Header Section */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Busca Turbo <span className="text-primary">AI</span>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center justify-center gap-2">
+          <Gauge className="w-8 h-8 text-primary" />
+          Buscador Turbo <span className="text-primary">Quant</span>
         </h1>
         <p className="text-muted-foreground text-sm max-w-xl mx-auto">
           Pesquisas avançadas multi-plataforma com operadores inteligentes.
@@ -194,33 +197,18 @@ const BuscaTurbo: React.FC = () => {
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
           )}
-          <div className="border-l border-border/85 h-6 mx-2" />
-          <div className="flex items-center gap-1.5 pr-1">
-            <button 
-              type="button"
-              className="p-2 hover:bg-accent rounded-full text-muted-foreground/80 hover:text-primary transition-all"
-              title="Pesquisa por voz (Decorativo)"
-            >
-              <Mic className="w-4 h-4" />
-            </button>
-            <button 
-              type="button"
-              className="p-2 hover:bg-accent rounded-full text-muted-foreground/80 hover:text-primary transition-all"
-              title="Pesquisa por imagem (Decorativo)"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
-            <button 
-              type="button"
-              onClick={handleRefine}
-              disabled={isRefining || !query}
-              className="p-2 hover:bg-primary/10 rounded-full text-primary disabled:opacity-50 transition-all ml-1"
-              title="Refinar com IA"
-            >
-              {isRefining ? <Cpu className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            </button>
-          </div>
+          <button 
+            type="button"
+            onClick={() => handleSearch()}
+            disabled={!query}
+            className="h-9 w-9 bg-primary hover:bg-primary/90 text-white rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed ml-1 flex-shrink-0"
+            title="Iniciar busca"
+          >
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
+
+
 
         {/* Nota sobre Navegadores */}
         <button
@@ -233,7 +221,7 @@ const BuscaTurbo: React.FC = () => {
           className="mt-4 text-green-500 hover:text-green-400 transition-colors text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-3 mx-auto cursor-pointer"
         >
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          Se seu navegador bloquear a abertura das abas , clique aqui.
+          Se seu navegador bloquear a abertura das abas , desbloquei abaixo manualmente.
         </button>
 
         {/* Trends + Filtros Rápidos */}
@@ -273,7 +261,7 @@ const BuscaTurbo: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-muted-foreground flex items-center gap-2">
-                <Globe className="w-4 h-4" /> Motores de Busca
+                <Globe className="w-4 h-4" /> Selecione os motores busca de sua preferência
               </h3>
               <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
                 {selectedPlatforms.length} Selecionados
@@ -285,7 +273,7 @@ const BuscaTurbo: React.FC = () => {
                   key={p.id}
                   onClick={() => togglePlatform(p.id)}
                   className={`
-                    group relative flex flex-col items-center justify-center p-2 rounded-xl border transition-all duration-300
+                    relative flex flex-col items-center justify-center p-2 rounded-xl border
                     ${selectedPlatforms.includes(p.id) 
                       ? 'bg-primary/10 border-primary shadow-sm' 
                       : 'bg-background/40 border-border hover:border-primary/30'}
@@ -293,14 +281,16 @@ const BuscaTurbo: React.FC = () => {
                   title={p.name}
                 >
                   <p.icon 
-                    className={`w-4 h-4 transition-transform group-hover:scale-110`} 
+                    className="w-4 h-4" 
                     style={{ color: selectedPlatforms.includes(p.id) ? p.color : 'inherit' }}
                   />
                   <span className="text-[9px] mt-1.5 font-bold truncate w-full text-center opacity-70 group-hover:opacity-100">
                     {p.name}
                   </span>
                   {selectedPlatforms.includes(p.id) && (
-                    <motion.div layoutId="active-pill" className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-primary rounded-full" />
+                    <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5 flex items-center justify-center border border-background shadow-xs">
+                      <Check className="w-2.5 h-2.5" />
+                    </div>
                   )}
                 </button>
               ))}
@@ -362,7 +352,8 @@ const BuscaTurbo: React.FC = () => {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <Card id="console-popups" className="p-4 border-primary/20 bg-muted/5 relative overflow-hidden group mb-8">
+            <div id="console-popups">
+              <Card className="p-4 border-primary/20 bg-muted/5 relative overflow-hidden group mb-8">
               <div className="absolute inset-0 bg-linear-to-r from-muted/10 to-transparent opacity-30" />
               <div className="relative">
                 <div className="flex items-center justify-between mb-6">
@@ -442,7 +433,8 @@ const BuscaTurbo: React.FC = () => {
                 </div>
               </div>
             </Card>
-          </motion.div>
+          </div>
+        </motion.div>
         )}
       </AnimatePresence>
 
@@ -481,7 +473,7 @@ const BuscaTurbo: React.FC = () => {
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold flex items-center gap-2">
-              <Command className="w-5 h-5 text-primary" /> Atalhos Inteligentes
+              <Command className="w-5 h-5 text-primary" /> Selecione Atalhos Inteligentes.
             </h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -501,7 +493,7 @@ const BuscaTurbo: React.FC = () => {
         {/* Operators Sidebar */}
         <div className="space-y-4">
           <h3 className="text-lg font-bold flex items-center gap-2">
-            <Filter className="w-5 h-5 text-primary" /> Operadores OSINT
+            <Filter className="w-5 h-5 text-primary" /> Selecione o Operadores OSINT
           </h3>
           <Card className="p-4 bg-muted/20 border-primary/20 space-y-2">
             {ADVANCED_OPERATORS.map((op) => (

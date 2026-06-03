@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import { linkService } from '../../services/linkService';
-import type { Category } from '../../types';
+import type { Category, Link } from '../../types';
 
 import { scrapeProduct } from '../../services/scraperService';
 
@@ -12,6 +12,7 @@ interface AddLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (linkData: any) => void;
+  linkToEdit?: Link | null;
 }
 
 const compressImage = (file: File): Promise<string> => {
@@ -54,7 +55,8 @@ const compressImage = (file: File): Promise<string> => {
   });
 };
 
-const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) => {
+const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, linkToEdit }) => {
+  const isEditing = !!linkToEdit;
   const [formData, setFormData] = useState({
     title: '',
     original_url: '',
@@ -228,6 +230,82 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
       setScrapeMessage('');
       setLastScrapedUrl('');
 
+      // Pré-popular formulário em modo de edição
+      if (linkToEdit) {
+        setFormData({
+          title: linkToEdit.title || '',
+          original_url: linkToEdit.original_url || '',
+          short_code: linkToEdit.short_code || '',
+          tags: Array.isArray(linkToEdit.tags) ? linkToEdit.tags.join(', ') : '',
+          category_id: linkToEdit.category_id || '',
+          platform: linkToEdit.platform || '',
+          original_price: linkToEdit.original_price?.toString() || '',
+          sale_price: linkToEdit.sale_price?.toString() || '',
+          expires_at: linkToEdit.expires_at || '',
+          redirect_type: (linkToEdit.redirect_type as '301' | '307') || '301',
+          thumbnail_url: linkToEdit.thumbnail_url && !linkToEdit.thumbnail_url.startsWith('[') ? linkToEdit.thumbnail_url : '',
+          is_nofollow: linkToEdit.is_nofollow ?? true,
+          is_sponsored: linkToEdit.is_sponsored ?? true,
+          is_active: linkToEdit.is_active ?? true,
+        });
+        // Restaurar imagens enviadas (array JSON)
+        if (linkToEdit.thumbnail_url?.startsWith('[')) {
+          try {
+            const imgs = JSON.parse(linkToEdit.thumbnail_url);
+            if (Array.isArray(imgs)) setUploadedImages(imgs);
+          } catch { /* silencioso */ }
+        } else {
+          setUploadedImages([]);
+        }
+        // Restaurar regras de dispositivo
+        if (linkToEdit.device_rules) {
+          setDeviceRules({
+            mobile: linkToEdit.device_rules.mobile || '',
+            tablet: linkToEdit.device_rules.tablet || '',
+            desktop: linkToEdit.device_rules.desktop || '',
+          });
+        }
+        // Restaurar regras de país
+        if (linkToEdit.country_rules) {
+          setCountryRulesList(
+            Object.entries(linkToEdit.country_rules).map(([country, url]) => ({ country, url }))
+          );
+        }
+        // Restaurar regras de idioma
+        if (linkToEdit.language_rules) {
+          setLanguageRulesList(
+            Object.entries(linkToEdit.language_rules).map(([language, url]) => ({ language, url }))
+          );
+        }
+        // Restaurar testes A/B
+        if (linkToEdit.ab_test_rules) {
+          setAbTestRulesList(linkToEdit.ab_test_rules);
+        }
+      } else {
+        // Resetar formulário para novo link
+        setFormData({
+          title: '',
+          original_url: '',
+          short_code: '',
+          tags: '',
+          category_id: '',
+          platform: '',
+          original_price: '',
+          sale_price: '',
+          expires_at: '',
+          redirect_type: '301',
+          thumbnail_url: '',
+          is_nofollow: true,
+          is_sponsored: true,
+          is_active: true
+        });
+        setUploadedImages([]);
+        setDeviceRules({ mobile: '', tablet: '', desktop: '' });
+        setCountryRulesList([]);
+        setLanguageRulesList([]);
+        setAbTestRulesList([]);
+      }
+
       const fetchCategories = async () => {
         setIsLoadingCategories(true);
         try {
@@ -241,7 +319,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
       };
       fetchCategories();
     }
-  }, [isOpen]);
+  }, [isOpen, linkToEdit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -271,54 +349,49 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
         finalThumbnailUrl = JSON.stringify(uploadedImages);
       }
 
+      // Auto-detectar plataforma se ainda não definida
+      const finalPlatform = formData.platform || (formData.original_url ? detectPlatform(formData.original_url) : '');
+      const platformToSave = finalPlatform === 'Outra' ? '' : finalPlatform;
+
+      // Converter tags de string para array
+      const tagsArray: string[] = typeof formData.tags === 'string'
+        ? formData.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t !== '')
+        : formData.tags as unknown as string[];
+
       const dataToSubmit = {
         title: formData.title,
         original_url: formData.original_url,
         short_code: formData.short_code,
-        tags: formData.tags,
-        category_id: formData.category_id,
+        tags: tagsArray,
+        category_id: formData.category_id || null,
         thumbnail_url: finalThumbnailUrl,
         expires_at: formData.expires_at || null,
         is_active: formData.is_active !== undefined ? formData.is_active : true,
-        // The following fields have been added after migration is executed by the user:
         original_price: formData.original_price ? parseFloat(formData.original_price) : null,
         sale_price: formData.sale_price ? parseFloat(formData.sale_price) : null,
-        platform: formData.platform,
-        redirect_type: formData.redirect_type,
+        platform: platformToSave,
+        redirect_type: formData.redirect_type as '301' | '307',
         device_rules: Object.keys(finalDeviceRules).length > 0 ? finalDeviceRules : null,
         country_rules: Object.keys(finalCountryRules).length > 0 ? finalCountryRules : null,
         language_rules: Object.keys(finalLanguageRules).length > 0 ? finalLanguageRules : null,
         ab_test_rules: finalAbTestRules.length > 0 ? finalAbTestRules : null
       };
 
-      await onAdd(dataToSubmit);
+      if (isEditing && linkToEdit) {
+        // Modo edição: atualizar link existente
+        await linkService.update(linkToEdit.id, dataToSubmit);
+      } else {
+        // Modo criação: adicionar novo link (onAdd cuida de chamar linkService.create)
+        await onAdd(dataToSubmit);
+      }
 
-      setFormData({
-        title: '',
-        original_url: '',
-        short_code: '',
-        tags: '',
-        category_id: '',
-        platform: '',
-        original_price: '',
-        sale_price: '',
-        expires_at: '',
-        redirect_type: '301',
-        thumbnail_url: '',
-        is_nofollow: true,
-        is_sponsored: true,
-        is_active: true
-      });
-      setUploadedImages([]);
-      setDeviceRules({ mobile: '', tablet: '', desktop: '' });
-      setCountryRulesList([]);
-      setLanguageRulesList([]);
-      setAbTestRulesList([]);
       setShowAdvanced(false);
+      onClose();
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   if (!isOpen) return null;
 
@@ -400,7 +473,16 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
                       placeholder="https://hotmart.com/..." 
                       className="w-full bg-background border border-border rounded-lg h-9 pl-9 pr-24 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all disabled:opacity-50 text-foreground"
                       value={formData.original_url}
-                      onChange={(e) => setFormData({...formData, original_url: e.target.value})}
+                      onChange={(e) => {
+                        const newUrl = e.target.value;
+                        const detected = newUrl ? detectPlatform(newUrl) : '';
+                        setFormData(prev => ({
+                          ...prev,
+                          original_url: newUrl,
+                          // Auto-preencher plataforma somente se ainda não foi definida manualmente
+                          platform: prev.platform || (detected !== 'Outra' ? detected : ''),
+                        }));
+                      }}
                     />
                     <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
                       <button
@@ -871,7 +953,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd }) =
                   </Button>
                   <Button type="submit" variant="primary" size="sm" className="flex-1 rounded-lg text-xs font-bold" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-2" />}
-                    {isSubmitting ? 'Salvando...' : 'Confirmar Link'}
+                    {isSubmitting ? 'Salvando...' : isEditing ? 'Salvar Alterações' : 'Confirmar Link'}
                   </Button>
                 </div>
               </form>

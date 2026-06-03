@@ -25,7 +25,7 @@ interface LinkCardProps {
   onUpdate?: () => void;
 }
 
-const LinkCard: React.FC<LinkCardProps> = ({ link, onDelete, onUpdate }) => {
+const LinkCard: React.FC<LinkCardProps> = ({ link, onDelete, onUpdate, onEdit }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -109,7 +109,10 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, onDelete, onUpdate }) => {
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                 <div className="absolute right-0 top-10 w-48 bg-card border border-border rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  <button className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-accent transition-colors text-left">
+                  <button 
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-accent transition-colors text-left"
+                    onClick={() => { if (onEdit) { onEdit(link); setShowMenu(false); } }}
+                  >
                     <Edit className="w-4 h-4" />
                     Editar Link
                   </button>
@@ -177,7 +180,7 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, onDelete, onUpdate }) => {
             onClick={() => window.open(`${window.location.origin}/go/${link.short_code}`, '_blank')}
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            Testar
+            Visualizar
           </Button>
         </div>
       </div>

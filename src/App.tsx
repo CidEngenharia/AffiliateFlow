@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { HelmetProvider } from 'react-helmet-async';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import DashboardLayout from './layouts/DashboardLayout';
@@ -41,11 +42,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const App: React.FC = () => {
   return (
-    <HelmetProvider>
-      <AuthProvider>
-        <SpeedInsights />
-        <Router>
-          <Routes>
+    <ThemeProvider>
+      <HelmetProvider>
+        <AuthProvider>
+          <SpeedInsights />
+          <Router>
+            <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
@@ -127,6 +129,7 @@ const App: React.FC = () => {
         </Router>
       </AuthProvider>
     </HelmetProvider>
+  </ThemeProvider>
   );
 };
 

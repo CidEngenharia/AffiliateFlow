@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, 
   Share2, 
-  ExternalLink, 
   Zap, 
   MessageCircle,
-  Loader2,
   AlertCircle,
   ArrowRight,
   Copy,
@@ -15,11 +13,19 @@ import {
   LayoutDashboard,
   X,
   Trophy,
-  ArrowLeft,
   Search,
   List,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Sun,
+  Moon,
+  Eye,
+  MousePointer,
+  Calendar,
+  SlidersHorizontal,
+  Twitter,
+  Facebook,
+  Link2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
@@ -28,6 +34,13 @@ import { Helmet } from 'react-helmet-async';
 import type { Link, Profile } from '../types';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import { useTheme } from '../context/ThemeContext';
+
+type LinkStats = {
+  clicks: number;
+  views: number;
+  created_at: string;
+};
 
 const getPlatformLogo = (name: string) => {
   const normalized = name.toLowerCase();
@@ -109,6 +122,60 @@ const Showcase: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedLink, setSelectedLink] = useState<Link | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { theme, toggleTheme } = useTheme();
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('Todos');
+  const [linkStats, setLinkStats] = useState<Record<string, LinkStats>>({});
+  const [shareMenuLink, setShareMenuLink] = useState<Link | null>(null);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [showShareShowcase, setShowShareShowcase] = useState(false);
+  const [showcaseLinkCopied, setShowcaseLinkCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  useEffect(() => {
+    const storageKey = 'affilehub-showcase-timer-target';
+    let target = localStorage.getItem(storageKey);
+    
+    if (!target) {
+      const newTarget = Date.now() + 24 * 60 * 60 * 1000;
+      localStorage.setItem(storageKey, String(newTarget));
+      target = String(newTarget);
+    } else {
+      if (Number(target) < Date.now()) {
+        const newTarget = Date.now() + 24 * 60 * 60 * 1000;
+        localStorage.setItem(storageKey, String(newTarget));
+        target = String(newTarget);
+      }
+    }
+
+    const targetTime = Number(target);
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const difference = targetTime - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setTimeLeft({ days: d, hours: h, minutes: m, seconds: s });
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchShowcaseData = async () => {
@@ -151,16 +218,102 @@ const Showcase: React.FC = () => {
     }
   }, [username]);
 
+  // Tracking de visualização quando modal abre
+  const trackLinkView = useCallback(async (link: Link) => {
+    // Incrementa views no estado local
+    setLinkStats(prev => ({
+      ...prev,
+      [link.id]: {
+        clicks: (prev[link.id]?.clicks ?? 0),
+        views: (prev[link.id]?.views ?? 0) + 1,
+        created_at: prev[link.id]?.created_at ?? link.created_at
+      }
+    }));
+    // Persiste no Supabase (campo click_count = views do modal)
+    try {
+      await supabase.rpc('increment_link_views', { link_id: link.id });
+    } catch (_) { /* silencioso */ }
+  }, []);
+
+  // Tracking de clique no botão "Comprar"
+  const trackLinkClick = useCallback(async (link: Link) => {
+    setLinkStats(prev => ({
+      ...prev,
+      [link.id]: {
+        clicks: (prev[link.id]?.clicks ?? 0) + 1,
+        views: (prev[link.id]?.views ?? 0),
+        created_at: prev[link.id]?.created_at ?? link.created_at
+      }
+    }));
+    try {
+      await supabase.rpc('increment_link_clicks', { link_id: link.id });
+    } catch (_) { /* silencioso */ }
+  }, []);
+
+  const handleOpenModal = (link: Link) => {
+    setSelectedLink(link);
+    trackLinkView(link);
+  };
+
   const handleShareShowcase = () => {
     const text = `Confira minha vitrine de ofertas no AfiliateFlow IA! 🚀\n\n${window.location.href}`;
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
   };
 
+  const shareShowcaseOnNetwork = (network: string) => {
+    const url = window.location.href;
+    const text = `Confira minha vitrine de ofertas no AfiliateFlow IA! 🚀`;
+    let shareUrl = '';
+    switch (network) {
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case 'telegram':
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(url);
+        setShowcaseLinkCopied(true);
+        setTimeout(() => { setShowcaseLinkCopied(false); setShowShareShowcase(false); }, 2000);
+        return;
+    }
+    if (shareUrl) window.open(shareUrl, '_blank');
+    setShowShareShowcase(false);
+  };
+
   const handleShareProduct = (link: Link) => {
-    const text = `🔥 *OFERTA IMPERDÍVEL!* 🔥\n\n*${link.title}*\n\n🛒 Compre agora: ${window.location.origin}/go/${link.short_code}\n\nVia AfiliateFlow IA ⚡`;
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-    window.open(whatsappUrl, '_blank');
+    setShareMenuLink(link);
+  };
+
+  const shareOnNetwork = (network: string, link: Link) => {
+    const url = `${window.location.origin}/go/${link.short_code}`;
+    const text = `🔥 OFERTA IMPERDÍVEL! ${link.title} — Compre agora:`;
+    let shareUrl = '';
+    switch (network) {
+      case 'whatsapp':
+        shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(`🔥 *OFERTA IMPERDÍVEL!* 🔥\n\n*${link.title}*\n\n🛒 Compre agora: ${url}\n\nVia AfiliateFlow IA ⚡`)}`;
+        break;
+      case 'telegram':
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        break;
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(url);
+        setCopiedId(link.id);
+        setTimeout(() => { setCopiedId(null); setShareMenuLink(null); }, 2000);
+        return;
+    }
+    if (shareUrl) window.open(shareUrl, '_blank');
+    setShareMenuLink(null);
   };
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -174,24 +327,38 @@ const Showcase: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Filtrar links com base na busca
-  const filteredLinks = links.filter(link => 
-    link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (link.description && link.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (link.platform && link.platform.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredLinks = links.filter(link => {
+    const matchesSearch = link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (link.description && link.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (link.platform && link.platform.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+    if (selectedPlatform === 'Todos') return matchesSearch;
+    
+    const linkPlatform = (link.platform || 'Outras').toLowerCase();
+    
+    if (selectedPlatform === 'Outras') {
+      const mainPlatforms = ['shopee', 'amazon', 'magalu', 'hotmart', 'kiwify'];
+      const matchesMain = mainPlatforms.some(p => linkPlatform.includes(p));
+      return matchesSearch && !matchesMain;
+    }
+    
+    return matchesSearch && linkPlatform.includes(selectedPlatform.toLowerCase());
+  });
 
-  // Agrupar links filtrados por plataforma
   const platforms = ['Shopee', 'Amazon', 'Magalu', 'Hotmart', 'Kiwify', 'Outras'];
   
   const groupedLinks = filteredLinks.reduce((acc, link) => {
-    let platform = link.platform || 'Outras';
+    const platform = link.platform || 'Outras';
     const normalized = platforms.find(p => platform.toLowerCase().includes(p.toLowerCase())) || 'Outras';
-    
     if (!acc[normalized]) acc[normalized] = [];
     acc[normalized].push(link);
     return acc;
   }, {} as Record<string, Link[]>);
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
 
   const renderStars = (rating: number = 5) => {
     return Array.from({ length: 5 }).map((_, i) => (
@@ -246,54 +413,141 @@ const Showcase: React.FC = () => {
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-500/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Header Ultra Premium */}
-      <header className="bg-card/70 backdrop-blur-2xl border-b border-border/50 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-primary to-purple-600 p-[1px] shadow-lg shadow-primary/20">
-              <div className="w-full h-full rounded-[15px] bg-card flex items-center justify-center overflow-hidden">
+      {/* Header estilo Shopee */}
+      <header className="sticky top-0 z-50 shadow-md" style={{ backgroundColor: '#EE4D2D' }}>
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 p-[1px] shadow overflow-hidden border border-white/30">
+              <div className="w-full h-full rounded-[10px] bg-white/10 flex items-center justify-center overflow-hidden">
                 {profile.avatar_url ? (
                   <img src={profile.avatar_url} alt={profile.full_name || ''} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="font-black text-primary text-xl">{profile.full_name?.charAt(0) || 'U'}</span>
+                  <span className="font-black text-white text-lg">{profile.full_name?.charAt(0) || 'U'}</span>
                 )}
               </div>
             </div>
             <div className="flex flex-col">
-              <h1 className="text-base font-black uppercase tracking-tight text-foreground leading-none">
+              <h1 className="text-sm font-black uppercase tracking-tight text-white leading-none">
                 {profile.full_name || 'Afiliado Profissional'}
               </h1>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">
-                  Vitrine Oficial Verificada
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse" />
+                <span className="text-[9px] text-white/80 font-black uppercase tracking-widest">
+                  Vitrine Verificada
                 </span>
               </div>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Botão Dark / Light Mode */}
+            <button
+              onClick={toggleTheme}
+              className="relative p-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all duration-300 cursor-pointer"
+              title={theme === 'dark' ? 'Mudar para Light Mode' : 'Mudar para Dark Mode'}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {theme === 'dark' ? (
+                  <motion.div
+                    key="sun"
+                    initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Sun className="w-4 h-4 text-white" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="moon"
+                    initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Moon className="w-4 h-4 text-white" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </button>
+
             {user?.id === profile.id && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/dashboard')} 
-                className="rounded-xl border border-border/50 hidden sm:flex"
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all cursor-pointer"
               >
-                <LayoutDashboard className="w-4 h-4 mr-2" />
-                <span className="font-black text-[10px] uppercase tracking-widest">Painel</span>
-              </Button>
+                <LayoutDashboard className="w-4 h-4 text-white" />
+                <span className="text-white font-black text-[10px] uppercase tracking-widest">Painel</span>
+              </button>
             )}
             
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleShareShowcase} 
-              className="rounded-xl border-border/50 hover:bg-primary hover:text-white hover:border-primary transition-all group"
+            {/* Botão WhatsApp */}
+            <button
+              onClick={handleShareShowcase}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-[#EE4D2D] hover:bg-white/90 transition-all cursor-pointer shadow-sm"
+              title="Compartilhar no WhatsApp"
             >
-              <Share2 className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline font-black text-[10px] uppercase tracking-widest">Compartilhar</span>
-            </Button>
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline font-black text-[10px] uppercase tracking-widest">WhatsApp</span>
+            </button>
+
+            {/* Botão Outras Redes */}
+            <div className="relative">
+              <button
+                onClick={() => setShowShareShowcase(v => !v)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 border border-white/30 text-white transition-all cursor-pointer"
+                title="Compartilhar em outras redes"
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline font-black text-[10px] uppercase tracking-widest">Mais</span>
+              </button>
+              <AnimatePresence>
+                {showShareShowcase && (
+                  <>
+                    {/* Overlay para fechar o menu */}
+                    <div className="fixed inset-0 z-40" onClick={() => setShowShareShowcase(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: -8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-10 z-50 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[180px]"
+                    >
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest px-3 py-1 mb-1">Compartilhar em</p>
+                      <button
+                        onClick={() => shareShowcaseOnNetwork('facebook')}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-blue-500/10 text-blue-500 transition-colors cursor-pointer"
+                      >
+                        <Facebook className="w-4 h-4" />
+                        <span className="text-xs">Facebook</span>
+                      </button>
+                      <button
+                        onClick={() => shareShowcaseOnNetwork('twitter')}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-sky-400/10 text-sky-400 transition-colors cursor-pointer"
+                      >
+                        <Twitter className="w-4 h-4" />
+                        <span className="text-xs">Twitter / X</span>
+                      </button>
+                      <button
+                        onClick={() => shareShowcaseOnNetwork('telegram')}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-blue-400/10 text-blue-400 transition-colors cursor-pointer"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        <span className="text-xs">Telegram</span>
+                      </button>
+                      <div className="h-px bg-border my-1" />
+                      <button
+                        onClick={() => shareShowcaseOnNetwork('copy')}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-muted transition-colors cursor-pointer text-foreground"
+                      >
+                        {showcaseLinkCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                        <span className="text-xs">{showcaseLinkCopied ? 'Link copiado!' : 'Copiar link'}</span>
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </header>
@@ -306,47 +560,147 @@ const Showcase: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <Zap className="w-12 h-12 text-primary fill-primary mx-auto mb-6 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
-            <h2 className="text-4xl md:text-6xl font-black mb-4 tracking-tighter text-foreground leading-none">
+            <h2 className="text-4xl md:text-6xl font-black mb-3 tracking-tighter text-foreground leading-none">
               Top Achadinhos <span className="text-orange-500 italic">da Semana!</span>
             </h2>
-            <p className="text-muted-foreground text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] max-w-xl mx-auto leading-relaxed mb-4">
-              {profile.bio || 'Produtos rastreados por Inteligência Artificial.'}
-            </p>
-            <div className="mb-12 text-center text-xs md:text-sm text-blue-900 dark:text-blue-300 font-normal uppercase tracking-wider">
-              Seja afiliado também, Conheça a{' '}
-              <a 
-                href="/" 
-                className="text-blue-900 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 underline transition-colors"
-              >
-                AfiliateFlow IA
-              </a>
-              .
+
+            {/* Título + bio + contador de promoção na mesma linha */}
+            <div className="flex items-center justify-center gap-3 flex-wrap mb-4">
+              <p className="text-muted-foreground text-[10px] md:text-sm uppercase tracking-[0.2em] md:tracking-[0.3em]">
+                {profile.bio || 'Produtos rastreados por Inteligência Artificial.'}
+              </p>
+              {/* Badge Promoção com contador inline */}
+              <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/30 rounded-full px-3 py-1">
+                <Zap className="w-3 h-3 text-orange-500 fill-orange-500 animate-pulse shrink-0" />
+                <span className="text-orange-500 text-[10px] uppercase tracking-widest">Promoção</span>
+                <span className="text-orange-400 text-[10px] tabular-nums">
+                  {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+                </span>
+              </div>
             </div>
 
-            {/* Search Bar Premium */}
-            <div className="max-w-xl mx-auto relative group">
-              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity" />
-              <div className="relative flex items-center bg-card border border-border/50 rounded-2xl p-2 shadow-xl backdrop-blur-xl">
-                <div className="pl-4 pr-2">
-                  <ShoppingBag className="w-5 h-5 text-muted-foreground" />
-                </div>
+            <div className="mb-8 text-center text-xs md:text-sm text-blue-900 dark:text-blue-300 uppercase tracking-wider">
+              Seja afiliado também, Conheça a{' '}
+              <a href="/" className="text-blue-900 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 underline transition-colors">
+                AfiliateFlow IA
+              </a>.
+            </div>
+
+            {/* Search Bar Google Style — ampliada com controles integrados */}
+            <div className="max-w-3xl mx-auto relative group mb-8">
+              <div className="relative flex items-center bg-card hover:bg-card/90 border border-border/80 rounded-full px-5 py-2 shadow-sm hover:shadow-md focus-within:shadow-md focus-within:border-primary/50 transition-all duration-300 gap-2">
+                <Search className="w-5 h-5 text-muted-foreground shrink-0" />
                 <input 
                   type="text" 
-                  placeholder="O que você está procurando hoje?..."
+                  placeholder="Pesquise produtos, ofertas ou marcas..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium py-3"
+                  className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-sm py-2.5 text-foreground placeholder:text-muted-foreground/60"
                 />
                 {searchTerm && (
-                  <button 
-                    onClick={() => setSearchTerm('')}
-                    className="p-2 hover:bg-muted rounded-xl transition-colors"
-                  >
+                  <button onClick={() => setSearchTerm('')} className="p-1.5 hover:bg-muted rounded-full transition-colors cursor-pointer">
                     <X className="w-4 h-4 text-muted-foreground" />
                   </button>
                 )}
+
+                {/* Divisor */}
+                <div className="w-px h-5 bg-border/60 mx-1 shrink-0" />
+
+                {/* Ícones de visualização grid/lista integrados */}
+                <div className="flex items-center gap-0.5">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                      viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Visualização em Grade"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                      viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Visualização em Lista"
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Divisor */}
+                <div className="w-px h-5 bg-border/60 mx-1 shrink-0" />
+
+                {/* Botão filtro */}
+                <button
+                  onClick={() => setShowFilterPanel(p => !p)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all duration-200 cursor-pointer ${
+                    showFilterPanel || selectedPlatform !== 'Todos'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                  title="Filtrar por plataforma"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-[10px] uppercase tracking-widest">Filtrar</span>
+                  {selectedPlatform !== 'Todos' && (
+                    <span className="w-1.5 h-1.5 bg-white rounded-full" />
+                  )}
+                </button>
               </div>
+
+              {/* Painel de filtro de categorias */}
+              <AnimatePresence>
+                {showFilterPanel && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ duration: 0.18 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-xl p-4 z-20"
+                  >
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest mb-3">Filtrar por plataforma</p>
+                    <div className="flex flex-wrap gap-2">
+                      {['Todos', 'Shopee', 'Amazon', 'Magalu', 'Hotmart', 'Kiwify', 'Outras'].map((cat) => {
+                        const isSelected = selectedPlatform === cat;
+                        return (
+                          <button
+                            key={cat}
+                            onClick={() => { setSelectedPlatform(cat); setShowFilterPanel(false); }}
+                            className={`px-4 py-2 rounded-full text-xs uppercase tracking-wider border transition-all duration-200 cursor-pointer ${
+                              isSelected
+                                ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105'
+                                : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent hover:text-foreground'
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Quick Categories (chips visíveis sempre) */}
+            <div className="flex items-center justify-center flex-wrap gap-2 max-w-2xl mx-auto mb-6">
+              {['Todos', 'Shopee', 'Amazon', 'Magalu', 'Hotmart', 'Kiwify', 'Outras'].map((cat) => {
+                const isSelected = selectedPlatform === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedPlatform(cat)}
+                    className={`px-4 py-2 rounded-full text-xs uppercase tracking-wider border transition-all duration-200 cursor-pointer ${
+                      isSelected
+                        ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105'
+                        : 'bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         </div>
@@ -356,30 +710,13 @@ const Showcase: React.FC = () => {
       <div className="max-w-5xl mx-auto px-6 py-12 relative z-10">
         {Object.keys(groupedLinks).length > 0 && (
           <div className="flex justify-between items-center mb-10 border-b border-border/20 pb-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Vitrine de Ofertas</h3>
-            <div className="flex items-center gap-1 bg-muted/40 border border-border/40 rounded-xl p-1">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all duration-200 cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-background text-foreground shadow-xs border border-border/20'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                title="Visualização em Grade"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all duration-200 cursor-pointer ${
-                  viewMode === 'list'
-                    ? 'bg-background text-foreground shadow-xs border border-border/20'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                title="Visualização em Lista"
-              >
-                <List className="w-4 h-4" />
-              </button>
+            <h3 className="text-xs uppercase tracking-widest text-muted-foreground">Vitrine de Ofertas</h3>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="tabular-nums">{filteredLinks.length} produto{filteredLinks.length !== 1 ? 's' : ''}</span>
+              <span>|</span>
+              <span className="tabular-nums">
+                {Object.keys(groupedLinks).filter(p => groupedLinks[p] && groupedLinks[p].length > 0).length} plataforma{Object.keys(groupedLinks).filter(p => groupedLinks[p] && groupedLinks[p].length > 0).length !== 1 ? 's' : ''}
+              </span>
             </div>
           </div>
         )}
@@ -426,7 +763,7 @@ const Showcase: React.FC = () => {
                         whileHover={{ y: -8 }}
                       >
                         <Card 
-                          onClick={() => setSelectedLink(link)}
+                          onClick={() => handleOpenModal(link)}
                           className={`p-0 overflow-hidden border border-border/50 shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 bg-card group rounded-3xl cursor-pointer flex ${
                             viewMode === 'grid' ? 'flex-col h-full' : 'flex-col sm:flex-row h-auto sm:h-56'
                           }`}
@@ -528,10 +865,10 @@ const Showcase: React.FC = () => {
                                         e.stopPropagation();
                                         handleShareProduct(link);
                                       }}
-                                      className="p-1 rounded-md text-muted-foreground hover:text-green-500 transition-colors cursor-pointer"
-                                      title="Compartilhar no WhatsApp"
+                                      className="p-1 rounded-md text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                                      title="Compartilhar"
                                     >
-                                      <MessageCircle className="w-3.5 h-3.5" />
+                                      <Share2 className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
                                 </div>
@@ -601,6 +938,61 @@ const Showcase: React.FC = () => {
         </div>
       </footer>
 
+      {/* Share Menu Modal */}
+      <AnimatePresence>
+        {shareMenuLink && (
+          <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShareMenuLink(null)} />
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              className="relative w-full max-w-sm bg-card border border-border rounded-3xl shadow-2xl p-6 z-10"
+            >
+              <button onClick={() => setShareMenuLink(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted flex items-center justify-center cursor-pointer">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-4">Compartilhar produto</p>
+              <p className="text-sm leading-snug mb-5 line-clamp-2">{shareMenuLink.title}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => shareOnNetwork('whatsapp', shareMenuLink)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/30 hover:bg-green-500/20 text-green-600 dark:text-green-400 transition-colors cursor-pointer text-xs uppercase tracking-wider"
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp
+                </button>
+                <button
+                  onClick={() => shareOnNetwork('telegram', shareMenuLink)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20 text-blue-500 transition-colors cursor-pointer text-xs uppercase tracking-wider"
+                >
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+                  Telegram
+                </button>
+                <button
+                  onClick={() => shareOnNetwork('twitter', shareMenuLink)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500/20 text-sky-500 transition-colors cursor-pointer text-xs uppercase tracking-wider"
+                >
+                  <Twitter className="w-4 h-4" /> Twitter / X
+                </button>
+                <button
+                  onClick={() => shareOnNetwork('facebook', shareMenuLink)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-indigo-500 transition-colors cursor-pointer text-xs uppercase tracking-wider"
+                >
+                  <Facebook className="w-4 h-4" /> Facebook
+                </button>
+              </div>
+              <button
+                onClick={() => shareOnNetwork('copy', shareMenuLink)}
+                className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-muted/50 border border-border hover:bg-muted text-muted-foreground transition-colors cursor-pointer text-xs uppercase tracking-wider"
+              >
+                {copiedId === shareMenuLink.id ? <Check className="w-4 h-4 text-green-500" /> : <Link2 className="w-4 h-4" />}
+                {copiedId === shareMenuLink.id ? 'Link copiado!' : 'Copiar link'}
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Product Details Modal */}
       <AnimatePresence>
         {selectedLink && (
@@ -612,7 +1004,12 @@ const Showcase: React.FC = () => {
             />
             
             {/* Modal Content */}
-            <div className="relative w-full max-w-lg bg-card border border-border rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh]">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg bg-card border border-border rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh]"
+            >
               {/* Close Button */}
               <button 
                 onClick={() => setSelectedLink(null)}
@@ -622,8 +1019,8 @@ const Showcase: React.FC = () => {
               </button>
 
               {/* Product Info */}
-              <div className="p-6 overflow-y-auto space-y-6">
-                {/* Image Container - suporta array JSON de imagens */}
+              <div className="p-6 overflow-y-auto space-y-5">
+                {/* Image Container */}
                 <div className="w-full bg-muted/20 rounded-2xl overflow-hidden" style={{ height: '240px' }}>
                   {selectedLink.thumbnail_url ? (
                     (() => {
@@ -634,9 +1031,7 @@ const Showcase: React.FC = () => {
                             return <ProductImageCarousel images={imgs} title={selectedLink.title} />;
                           }
                         }
-                      } catch (e) {
-                        // fallback para img simples
-                      }
+                      } catch (_) { /* fallback */ }
                       return (
                         <img 
                           src={selectedLink.thumbnail_url} 
@@ -648,48 +1043,86 @@ const Showcase: React.FC = () => {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-3">
                       <ShoppingBag className="w-10 h-10 text-muted-foreground/20" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Sem imagem</span>
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40">Sem imagem</span>
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-4">
-                  {/* Platform Badge */}
-                  <div className="inline-block bg-muted text-muted-foreground text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border border-border">
+                {/* Stats: cliques, visualizações, data de postagem */}
+                <div className="flex items-center gap-3 px-1">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <MousePointer className="w-3.5 h-3.5" />
+                    <span className="text-xs tabular-nums">
+                      <motion.span
+                        key={linkStats[selectedLink.id]?.clicks ?? (selectedLink as any).click_count ?? 0}
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="inline-block"
+                      >
+                        {(linkStats[selectedLink.id]?.clicks ?? (selectedLink as any).click_count ?? 0).toLocaleString('pt-BR')}
+                      </motion.span>
+                      <span className="ml-1 text-[10px] uppercase tracking-wider">cliques</span>
+                    </span>
+                  </div>
+                  <div className="w-px h-3 bg-border" />
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Eye className="w-3.5 h-3.5" />
+                    <span className="text-xs tabular-nums">
+                      <motion.span
+                        key={linkStats[selectedLink.id]?.views ?? 0}
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="inline-block"
+                      >
+                        {(linkStats[selectedLink.id]?.views ?? 0).toLocaleString('pt-BR')}
+                      </motion.span>
+                      <span className="ml-1 text-[10px] uppercase tracking-wider">visualizações</span>
+                    </span>
+                  </div>
+                  <div className="w-px h-3 bg-border" />
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span className="text-xs">
+                      {formatDate(selectedLink.created_at)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="inline-block bg-muted text-muted-foreground text-[10px] uppercase tracking-widest px-3 py-1 rounded-lg border border-border">
                     {selectedLink.platform || 'Outra'}
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-xl font-bold leading-snug">
+                  <h3 className="text-xl leading-snug">
                     {selectedLink.title}
                   </h3>
 
-                  {/* Description */}
                   {selectedLink.description && (
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {selectedLink.description}
                     </p>
                   )}
 
-                  {/* Rating */}
                   <div className="flex items-center gap-1">
                     {renderStars(selectedLink.rating)}
-                    <span className="text-xs text-muted-foreground ml-1 font-bold">(5.0)</span>
+                    <span className="text-xs text-muted-foreground ml-1">(5.0)</span>
                   </div>
                 </div>
 
-                {/* Price and Sharing Buttons */}
+                {/* Price and Share Buttons */}
                 <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/50">
                   <div className="flex flex-col gap-1">
                     {selectedLink.original_price && (
-                      <span className="text-xs text-muted-foreground line-through font-bold uppercase tracking-widest opacity-60">
+                      <span className="text-xs text-muted-foreground line-through uppercase tracking-widest opacity-60">
                         De R$ {selectedLink.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     )}
                     <div className="flex items-center gap-3">
                       <div className="flex items-baseline gap-1">
-                        <span className="text-xs font-black text-primary">R$</span>
-                        <span className="text-3xl font-black text-foreground tracking-tighter">
+                        <span className="text-xs text-primary">R$</span>
+                        <span className="text-3xl text-foreground tracking-tighter">
                           {(selectedLink.sale_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
@@ -704,10 +1137,10 @@ const Showcase: React.FC = () => {
                         </button>
                         <button 
                           onClick={() => handleShareProduct(selectedLink)}
-                          className="w-7 h-7 rounded-lg bg-card hover:bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-green-500 transition-colors cursor-pointer"
-                          title="Compartilhar no WhatsApp"
+                          className="w-7 h-7 rounded-lg bg-card hover:bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                          title="Compartilhar"
                         >
-                          <MessageCircle className="w-3.5 h-3.5" />
+                          <Share2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -719,8 +1152,9 @@ const Showcase: React.FC = () => {
               <div className="p-6 bg-muted/10 border-t border-border/50">
                 <Button 
                   variant="primary" 
-                  className="w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/25 relative overflow-hidden"
+                  className="w-full h-14 rounded-2xl text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-primary/25 relative overflow-hidden"
                   onClick={() => {
+                    trackLinkClick(selectedLink);
                     window.open(`${window.location.origin}/go/${selectedLink.short_code}`, '_blank');
                     setSelectedLink(null);
                   }}
@@ -730,7 +1164,7 @@ const Showcase: React.FC = () => {
                   </span>
                 </Button>
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>

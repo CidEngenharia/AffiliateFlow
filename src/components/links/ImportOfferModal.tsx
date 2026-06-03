@@ -32,7 +32,7 @@ const SUGGESTED_PRODUCTS = [
   {
     title: 'Novo Kindle Paperwhite 16GB - Tela de 6.8”',
     original_url: 'https://www.amazon.com.br/dp/B09TKT1KKL',
-    thumbnail_url: 'https://images-na.ssl-images-amazon.com/images/I/61Y5R-+g9fL._AC_SX679_.jpg',
+    thumbnail_url: 'https://images.unsplash.com/photo-1544822681-39f55342390f?w=500&auto=format&fit=crop&q=60',
     platform: 'Amazon',
     original_price: 799.00,
     sale_price: 719.10,
@@ -133,20 +133,36 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
 
   // Autogerar short_code único a partir do título do produto
   const generateShortCode = (title: string): string => {
-    return title
+    const base = title
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '') // Remover acentos
       .replace(/[^a-z0-9\s-]/g, '')    // Remover caracteres especiais
       .trim()
       .replace(/\s+/g, '-')            // Substituir espaços por hífen
-      .substring(0, 18);               // Limitar tamanho
+      .substring(0, 14);               // Limitar tamanho base para acomodar o sufixo
+      
+    const suffix = Math.random().toString(36).substring(2, 6);
+    return `${base}-${suffix}`;
   };
 
   // Inicia a raspagem inteligente usando ScraperAPI (100% frontend, sem backend)
   const startScan = async (targetUrl: string, presetProduct?: typeof SUGGESTED_PRODUCTS[0]) => {
     if (!targetUrl && !presetProduct) return;
     
+    if (presetProduct) {
+      setStep('scanning');
+      setScanProgress(30);
+      setScanStatusText('Carregando dados da oferta de demonstração...');
+      setTimeout(() => {
+        setScanProgress(100);
+        setTimeout(() => {
+          applyFallback(targetUrl, presetProduct);
+        }, 200);
+      }, 400);
+      return;
+    }
+
     setStep('scanning');
     setScanProgress(5);
     setScanStatusText('Conectando ao servidor seguro de raspagem...');
@@ -271,8 +287,8 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
     } else {
       const platform = detectPlatform(targetUrl);
       let title = `Oferta Imperdivel - ${platform}`;
-      let originalPrice = '199.90';
-      let salePrice = '149.90';
+      let originalPrice = '';
+      let salePrice = '';
       let tags = `${platform.toLowerCase().replace(' ', '')}, oferta, importado`;
 
       try {
@@ -543,16 +559,21 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Código de URL Encurtada</label>
-                        <input 
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Plataforma</label>
+                        <select 
                           required
                           disabled={isSubmitting}
-                          type="text" 
-                          placeholder="Ex: kindle-promo" 
                           className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all text-foreground"
-                          value={productData.short_code}
-                          onChange={(e) => setProductData({...productData, short_code: e.target.value})}
-                        />
+                          value={productData.platform}
+                          onChange={(e) => setProductData({...productData, platform: e.target.value})}
+                        >
+                          <option value="Amazon">Amazon</option>
+                          <option value="Shopee">Shopee</option>
+                          <option value="Magalu">Magalu</option>
+                          <option value="Hotmart">Hotmart</option>
+                          <option value="Kiwify">Kiwify</option>
+                          <option value="Outra">Outra</option>
+                        </select>
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Categoria de Organização</label>
@@ -568,6 +589,19 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
                           ))}
                         </select>
                       </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Código de URL Encurtada</label>
+                      <input 
+                        required
+                        disabled={isSubmitting}
+                        type="text" 
+                        placeholder="Ex: kindle-promo" 
+                        className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs focus:ring-1 focus:ring-primary/50 outline-hidden transition-all text-foreground"
+                        value={productData.short_code}
+                        onChange={(e) => setProductData({...productData, short_code: e.target.value})}
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

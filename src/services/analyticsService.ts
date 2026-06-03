@@ -11,6 +11,7 @@ export interface LinkStats {
   clicks: number;
   conversions: number;
   revenue: number;
+  platform?: string | null;
 }
 
 export interface DeviceStats {
@@ -19,8 +20,11 @@ export interface DeviceStats {
 }
 
 export interface CountryStats {
+  id: string;
   country: string;
   clicks: number;
+  conversions: number;
+  revenue: number;
   percentage: number;
 }
 
@@ -71,7 +75,7 @@ export const analyticsService = {
   async getTopLinks(limit: number = 5): Promise<LinkStats[]> {
     const { data: links, error } = await supabase
       .from('links')
-      .select('id, title, clicks_count, conversions_count')
+      .select('id, title, clicks_count, conversions_count, platform')
       .order('clicks_count', { ascending: false })
       .limit(limit);
 
@@ -86,6 +90,7 @@ export const analyticsService = {
       clicks: link.clicks_count || 0,
       conversions: link.conversions_count || 0,
       revenue: (link.conversions_count || 0) * 45.0,
+      platform: link.platform
     }));
   },
 
@@ -191,7 +196,7 @@ export const analyticsService = {
   async getCountryStats(days: number = 7): Promise<CountryStats[]> {
     const { data, error } = await supabase
       .from('analytics')
-      .select('country_code')
+      .select('country_code, is_conversion, revenue_estimated')
       .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
 
     if (error) {
@@ -199,13 +204,23 @@ export const analyticsService = {
       return [];
     }
 
-    const counts: Record<string, number> = {};
-    let total = 0;
+    const counts: Record<string, { clicks: number; conversions: number; revenue: number }> = {};
+    let totalClicks = 0;
 
     data.forEach(item => {
-      const country = item.country_code || 'BR';
-      counts[country] = (counts[country] || 0) + 1;
-      total++;
+      const code = item.country_code || 'BR';
+      if (!counts[code]) {
+        counts[code] = { clicks: 0, conversions: 0, revenue: 0 };
+      }
+      counts[code].clicks++;
+      if (item.is_conversion) {
+        counts[code].conversions++;
+      }
+      const rev = typeof item.revenue_estimated === 'number'
+        ? item.revenue_estimated
+        : parseFloat(item.revenue_estimated as any) || 0;
+      counts[code].revenue += rev > 0 ? rev : (item.is_conversion ? 45.0 : 0);
+      totalClicks++;
     });
 
     const countryNameMap: Record<string, string> = {
@@ -224,16 +239,18 @@ export const analyticsService = {
     };
 
     return Object.entries(counts)
-      .map(([code, clicks]) => {
+      .map(([code, stats]) => {
         const name = countryNameMap[code] || code;
         return {
+          id: code,
           country: name,
-          clicks,
-          percentage: total > 0 ? parseFloat(((clicks / total) * 100).toFixed(1)) : 0
+          clicks: stats.clicks,
+          conversions: stats.conversions,
+          revenue: stats.revenue,
+          percentage: totalClicks > 0 ? parseFloat(((stats.clicks / totalClicks) * 100).toFixed(1)) : 0
         };
       })
-      .sort((a, b) => b.clicks - a.clicks)
-      .slice(0, 5);
+      .sort((a, b) => b.clicks - a.clicks);
   },
 
   async getRecentActivity(limit: number = 10) {
@@ -261,5 +278,39 @@ export const analyticsService = {
       location: item.country_code || 'BR',
       device: item.device_type || 'desktop'
     }));
+  },
+
+  async getRefererStats(days: number = 7): Promise<{ name: string; value: number }[]> {
+    const { data, error } = await supabase
+      .from('analytics')
+      .select('referer')
+      .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
+
+    if (error) {
+      console.error('Error fetching referer stats:', error);
+      return [];
+    }
+
+    const counts = {
+      'Links Diretos': 0,
+      'Redes Sociais': 0,
+      'Buscas Orgânicas': 0,
+      'Anúncios Pagos': 0
+    };
+
+    data?.forEach(item => {
+      const ref = (item.referer || 'direto').toLowerCase();
+      if (ref.includes('google') || ref.includes('bing') || ref.includes('yahoo')) {
+        counts['Buscas Orgânicas']++;
+      } else if (ref.includes('facebook') || ref.includes('instagram') || ref.includes('tiktok') || ref.includes('whatsapp') || ref.includes('t.co') || ref.includes('twitter')) {
+        counts['Redes Sociais']++;
+      } else if (ref.includes('ads') || ref.includes('cpc') || ref.includes('paid') || ref.includes('anuncio')) {
+        counts['Anúncios Pagos']++;
+      } else {
+        counts['Links Diretos']++;
+      }
+    });
+
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }
 };
