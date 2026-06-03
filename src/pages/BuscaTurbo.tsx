@@ -17,7 +17,10 @@ import {
   BrainCircuit,
   Command,
   SearchCode,
-  Check
+  Check,
+  X,
+  Mic,
+  Camera
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Card from '../components/ui/Card';
@@ -172,26 +175,108 @@ const BuscaTurbo: React.FC = () => {
           Pesquisas avançadas multi-plataforma com operadores inteligentes.
         </p>
 
-        {/* Barra de busca abaixo do título */}
-        <div className="relative max-w-2xl mx-auto mt-4">
-          <Input
+        {/* Barra de busca estilo Google */}
+        <div className="flex items-center w-full max-w-2xl mx-auto mt-6 bg-card border border-border/80 rounded-full px-4 py-1.5 shadow-md hover:shadow-lg focus-within:shadow-lg focus-within:border-primary/40 transition-all">
+          <Search className="w-5 h-5 text-muted-foreground/60 ml-1" />
+          <input
+            type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ex: nextjs auth site:github.com"
-            icon={Search}
-            className="py-3 bg-background/50 border-border shadow-sm"
+            placeholder="Pesquise ou digite uma consulta..."
+            className="flex-1 bg-transparent border-0 outline-hidden ring-0 focus:ring-0 focus:outline-hidden text-sm text-foreground px-3 py-2 placeholder-muted-foreground/60"
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+          {query && (
+            <button 
+              onClick={() => setQuery('')}
+              className="p-1.5 hover:bg-accent rounded-full transition-colors mr-1"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          )}
+          <div className="border-l border-border/85 h-6 mx-2" />
+          <div className="flex items-center gap-1.5 pr-1">
+            <button 
+              type="button"
+              className="p-2 hover:bg-accent rounded-full text-muted-foreground/80 hover:text-primary transition-all"
+              title="Pesquisa por voz (Decorativo)"
+            >
+              <Mic className="w-4 h-4" />
+            </button>
+            <button 
+              type="button"
+              className="p-2 hover:bg-accent rounded-full text-muted-foreground/80 hover:text-primary transition-all"
+              title="Pesquisa por imagem (Decorativo)"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+            <button 
+              type="button"
               onClick={handleRefine}
               disabled={isRefining || !query}
-              className="rounded-xl"
+              className="p-2 hover:bg-primary/10 rounded-full text-primary disabled:opacity-50 transition-all ml-1"
+              title="Refinar com IA"
             >
-              {isRefining ? <Cpu className="w-4 h-4 animate-spin" /> : <BrainCircuit className="w-4 h-4 text-primary" />}
-            </Button>
+              {isRefining ? <Cpu className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Linha de Categorias estilo Google */}
+        <div className="flex flex-wrap items-center justify-between max-w-2xl mx-auto mt-4 px-4 border-b border-border/40 pb-2 text-xs md:text-sm text-muted-foreground/80">
+          <div className="flex items-center gap-5 overflow-x-auto no-scrollbar scroll-smooth">
+            <button 
+              onClick={handleRefine}
+              disabled={isRefining || !query}
+              className="flex items-center gap-1 hover:text-primary font-bold py-1 transition-colors relative"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              Modo IA
+            </button>
+            <button 
+              onClick={() => setSelectedPlatforms(['google', 'github', 'reddit'])}
+              className="hover:text-primary font-bold py-1 transition-colors"
+            >
+              Tudo
+            </button>
+            <button 
+              onClick={() => setSelectedPlatforms(['shopee', 'amazon', 'magalu'])}
+              className="hover:text-primary font-bold py-1 transition-colors"
+            >
+              Shopping
+            </button>
+            <button 
+              onClick={() => setSelectedPlatforms(['google', 'bing'])}
+              className="hover:text-primary font-bold py-1 transition-colors"
+            >
+              Imagens
+            </button>
+            <button 
+              onClick={() => setSelectedPlatforms(['google', 'bing'])}
+              className="hover:text-primary font-bold py-1 transition-colors"
+            >
+              Notícias
+            </button>
+            <button 
+              onClick={() => setSelectedPlatforms(['youtube', 'tiktok'])}
+              className="hover:text-primary font-bold py-1 transition-colors"
+            >
+              Vídeos curtos
+            </button>
+            <button 
+              onClick={() => setSelectedPlatforms(['google', 'duckduckgo'])}
+              className="hover:text-primary font-bold py-1 transition-colors"
+            >
+              Web
+            </button>
+            <button className="hover:text-primary font-bold py-1 transition-colors flex items-center gap-0.5">
+              Mais
+            </button>
+          </div>
+          <div className="flex items-center">
+            <button className="hover:text-primary font-bold py-1 transition-colors flex items-center gap-1">
+              Ferramentas
+            </button>
           </div>
         </div>
 
