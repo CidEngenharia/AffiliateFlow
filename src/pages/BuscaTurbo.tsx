@@ -165,16 +165,35 @@ const BuscaTurbo: React.FC = () => {
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
       {/* Header Section */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border text-muted-foreground mb-2">
-          <Sparkles className="w-3 h-3" />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Inteligência OSINT</span>
-        </div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Busca Turbo <span className="text-primary">AI</span>
         </h1>
         <p className="text-muted-foreground text-sm max-w-xl mx-auto">
           Pesquisas avançadas multi-plataforma com operadores inteligentes.
         </p>
+
+        {/* Barra de busca abaixo do título */}
+        <div className="relative max-w-2xl mx-auto mt-4">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ex: nextjs auth site:github.com"
+            icon={Search}
+            className="py-3 bg-background/50 border-border shadow-sm"
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefine}
+              disabled={isRefining || !query}
+              className="rounded-xl"
+            >
+              {isRefining ? <Cpu className="w-4 h-4 animate-spin" /> : <BrainCircuit className="w-4 h-4 text-primary" />}
+            </Button>
+          </div>
+        </div>
 
         {/* Nota sobre Navegadores */}
         <button
@@ -212,29 +231,6 @@ const BuscaTurbo: React.FC = () => {
         <div className="absolute inset-0 bg-linear-to-br from-white/5 to-transparent opacity-10" />
         
         <div className="relative p-6 space-y-6">
-          {/* Search Bar */}
-          <div className="relative">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ex: nextjs auth site:github.com"
-              icon={Search}
-              className="py-3 bg-background/50 border-border shadow-sm"
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleRefine}
-                disabled={isRefining || !query}
-                className="rounded-xl"
-              >
-                {isRefining ? <Cpu className="w-4 h-4 animate-spin" /> : <BrainCircuit className="w-4 h-4 text-primary" />}
-              </Button>
-            </div>
-          </div>
-
           {/* Platforms Grid */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
