@@ -514,25 +514,25 @@ const Landing: React.FC = () => {
 
                   {/* Badge */}
                   <div className="inline-flex w-fit items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/15">
-                    <MousePointer2 className="w-3 h-3 text-violet-400" />
-                    <span className="text-[10px] font-black text-violet-400 uppercase tracking-[0.3em]">Mobile First</span>
+                    <Sparkles className="w-3 h-3 text-violet-400" />
+                    <span className="text-[10px] font-black text-violet-400 uppercase tracking-[0.3em]">automatize seus ganhos</span>
                   </div>
 
                   {/* Título degradê branco → lilás */}
                   <h2 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight">
-                    <span className="text-white">Controle total</span>{' '}
+                    <span className="text-white">Deixe que a IA</span>{' '}
                     <span style={{
                       background: 'linear-gradient(90deg, #e9d5ff 0%, #c084fc 55%, #a855f7 100%)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                     }}>
-                      na palma da mão
+                      venda por você 24/7.
                     </span>
                   </h2>
 
                   {/* Descrição */}
                   <p className="text-sm md:text-lg text-slate-400 leading-relaxed max-w-md">
-                    Monitore comissões, gere links e acompanhe campanhas em tempo real — direto do celular ou tablet.
+                    Monitore comissões, gerencie links e automatize seus disparos em massa tudo através da nossa tecnologia de inteligência artificial.
                   </p>
 
                   {/* Bullets compactos */}
@@ -556,7 +556,7 @@ const Landing: React.FC = () => {
                     <motion.button
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm md:text-base font-bold text-white tracking-wide"
+                      className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm md:text-base font-bold text-white tracking-wide cursor-pointer"
                       style={{
                         background: 'linear-gradient(135deg, #6d28d9, #9333ea)',
                         boxShadow: '0 6px 24px rgba(109,40,217,0.3)',
@@ -576,9 +576,9 @@ const Landing: React.FC = () => {
                     className="w-full max-w-[500px]"
                   >
                     <img
-                      src="/black_.png"
-                      alt="Afiliado controlando dashboard pelo tablet"
-                      className="w-full h-auto object-contain drop-shadow-[0_20px_50px_rgba(168,85,247,0.15)]"
+                      src="/images/landing-ai.jpg"
+                      alt="IA automatizando vendas para afiliados"
+                      className="w-full h-auto rounded-2xl object-contain drop-shadow-[0_20px_50px_rgba(168,85,247,0.15)]"
                     />
                   </motion.div>
                 </div>
@@ -628,10 +628,11 @@ const Landing: React.FC = () => {
           >
             <div>
               <div className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Free</div>
-              <div className="flex items-baseline gap-1 mb-6">
+              <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-4xl font-extrabold text-white">R$ 0,00</span>
                 <span className="text-xs text-slate-400">/mês</span>
               </div>
+              <div className="text-xs text-emerald-400 font-bold mb-6">30 Dias Free</div>
               
               <div className="w-full h-px bg-white/5 my-6" />
               
@@ -717,11 +718,11 @@ const Landing: React.FC = () => {
             </div>
 
             <div className="mt-8">
-              <Link to="/login">
-                <button className="w-full py-3.5 px-4 rounded-xl bg-[#EE4D2D] hover:bg-[#ff5a36] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md active:scale-95">
+              <a href="https://buy.stripe.com/9B64gsd957Ni7LAdOGf3a0j" target="_blank" rel="noopener noreferrer">
+                <button className="w-full py-3.5 px-4 rounded-xl bg-[#EE4D2D] hover:bg-[#ff5a36] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md active:scale-95 cursor-pointer">
                   Assinar profissional
                 </button>
-              </Link>
+              </a>
             </div>
           </motion.div>
 
@@ -771,11 +772,11 @@ const Landing: React.FC = () => {
             </div>
 
             <div className="mt-8">
-              <Link to="/login">
-                <button className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#EE4D2D] hover:from-orange-400 hover:to-[#ff5a36] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md active:scale-95">
+              <a href="https://buy.stripe.com/cNi7sE1qn2sYe9YeSKf3a0k" target="_blank" rel="noopener noreferrer">
+                <button className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#EE4D2D] hover:from-orange-400 hover:to-[#ff5a36] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md active:scale-95 cursor-pointer">
                   Obter plano turbo
                 </button>
-              </Link>
+              </a>
             </div>
           </motion.div>
 
