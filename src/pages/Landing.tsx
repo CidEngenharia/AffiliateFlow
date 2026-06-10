@@ -44,8 +44,8 @@ const Landing: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#020617] text-[#F8F9FA] overflow-x-hidden selection:bg-blue-500/30 font-sans">
       <Helmet>
-        <title>AfiliateFlow IA | Inteligência Artificial para Afiliados de Elite</title>
-        <meta name="description" content="Domine o mercado de afiliados com automação inteligente, IA de alta conversão e monitoramento em tempo real." />
+        <title>Afiliate Flow | Sistema Inteligente de Gestão de Afiliados</title>
+        <meta name="description" content="Automatize suas vendas com um Sistema IA de gestão de links de forma automatizada , com buscas turbo, e acompanhamento de Analytics em tempo real." />
       </Helmet>
       
       {/* Background Glows + Balões Flutuantes */}
