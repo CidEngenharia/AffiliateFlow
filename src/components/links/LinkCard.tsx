@@ -86,7 +86,19 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, onDelete, onUpdate, onEdit })
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-12 h-12 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden">
               {link.thumbnail_url ? (
-                <img src={link.thumbnail_url} alt={link.title} className="w-full h-full object-cover" />
+                (() => {
+                  try {
+                    if (link.thumbnail_url.startsWith('[')) {
+                      const imgs = JSON.parse(link.thumbnail_url);
+                      if (Array.isArray(imgs) && imgs.length > 0) {
+                        return <img src={imgs[0]} alt={link.title} className="w-full h-full object-cover" />;
+                      }
+                    }
+                  } catch (e) {
+                    // Fallback
+                  }
+                  return <img src={link.thumbnail_url} alt={link.title} className="w-full h-full object-cover" />;
+                })()
               ) : (
                 <LinkIcon className="text-primary w-6 h-6" />
               )}

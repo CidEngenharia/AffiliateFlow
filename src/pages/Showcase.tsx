@@ -25,7 +25,9 @@ import {
   SlidersHorizontal,
   Twitter,
   Facebook,
-  Link2
+  Link2,
+  Star,
+  Flame
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
@@ -141,12 +143,12 @@ const Showcase: React.FC = () => {
     let target = localStorage.getItem(storageKey);
     
     if (!target) {
-      const newTarget = Date.now() + 24 * 60 * 60 * 1000;
+      const newTarget = Date.now() + 30 * 60 * 1000;
       localStorage.setItem(storageKey, String(newTarget));
       target = String(newTarget);
     } else {
       if (Number(target) < Date.now()) {
-        const newTarget = Date.now() + 24 * 60 * 60 * 1000;
+        const newTarget = Date.now() + 30 * 60 * 1000;
         localStorage.setItem(storageKey, String(newTarget));
         target = String(newTarget);
       }
@@ -362,7 +364,7 @@ const Showcase: React.FC = () => {
 
   const renderStars = (rating: number = 5) => {
     return Array.from({ length: 5 }).map((_, i) => (
-      <Zap 
+      <Star 
         key={i} 
         className={`w-3 h-3 ${i < rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/20'}`} 
       />
@@ -566,15 +568,15 @@ const Showcase: React.FC = () => {
 
             {/* Título + bio + contador de promoção na mesma linha */}
             <div className="flex items-center justify-center gap-3 flex-wrap mb-4">
-              <p className="text-muted-foreground text-[10px] md:text-sm uppercase tracking-[0.2em] md:tracking-[0.3em]">
+              <p className="text-gray-600 dark:text-gray-400 text-[10px] md:text-sm tracking-[0.1em] md:tracking-[0.15em]">
                 {profile.bio || 'Produtos rastreados por Inteligência Artificial.'}
               </p>
-              {/* Badge Promoção com contador inline */}
-              <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/30 rounded-full px-3 py-1">
-                <Zap className="w-3 h-3 text-orange-500 fill-orange-500 animate-pulse shrink-0" />
-                <span className="text-orange-500 text-[10px] uppercase tracking-widest">Promoção</span>
-                <span className="text-orange-400 text-[10px] tabular-nums">
-                  {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+              {/* Badge Promoção com contador inline — sem modal */}
+              <div className="flex items-center gap-1.5">
+                <Flame className="w-5 h-5 fill-orange-500 text-orange-500 animate-pulse shrink-0 drop-shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+                <span className="text-orange-500 text-[11px] font-black tracking-widest">hot price</span>
+                <span className="text-muted-foreground font-bold text-[11px] tabular-nums">
+                  {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
                 </span>
               </div>
             </div>
@@ -827,6 +829,20 @@ const Showcase: React.FC = () => {
                               <div className="flex items-center gap-1 mb-4">
                                 {renderStars(link.rating)}
                                 <span className="text-[10px] text-muted-foreground ml-1 font-bold">(5.0)</span>
+                                {(() => {
+                                  const discount = link.original_price && link.sale_price 
+                                    ? Math.round(((link.original_price - link.sale_price) / link.original_price) * 100)
+                                    : 0;
+                                  if (discount >= 50) {
+                                    return (
+                                      <span className="inline-flex items-center gap-1 ml-2">
+                                        <Flame className="w-4 h-4 fill-orange-500 text-orange-500 animate-pulse drop-shadow-[0_0_5px_rgba(249,115,22,0.7)]" />
+                                        <span className="text-orange-500 text-[9px] font-black tracking-wider">hot price</span>
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                             </div>
                             
@@ -1108,6 +1124,13 @@ const Showcase: React.FC = () => {
                   <div className="flex items-center gap-1">
                     {renderStars(selectedLink.rating)}
                     <span className="text-xs text-muted-foreground ml-1">(5.0)</span>
+                    {selectedLink.original_price && selectedLink.sale_price &&
+                      Math.round(((selectedLink.original_price - selectedLink.sale_price) / selectedLink.original_price) * 100) >= 50 && (
+                        <span className="inline-flex items-center gap-1 ml-2">
+                          <Flame className="w-5 h-5 fill-orange-500 text-orange-500 animate-pulse drop-shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+                          <span className="text-orange-500 text-[10px] font-black tracking-wider">hot price</span>
+                        </span>
+                    )}
                   </div>
                 </div>
 

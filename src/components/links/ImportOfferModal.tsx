@@ -125,7 +125,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
     const lowerUrl = url.toLowerCase();
     if (lowerUrl.includes('amazon.')) return 'Amazon';
     if (lowerUrl.includes('shopee.')) return 'Shopee';
-    if (lowerUrl.includes('magalu.') || lowerUrl.includes('magazineluiza.')) return 'Magalu';
+    if (lowerUrl.includes('magalu.') || lowerUrl.includes('magazineluiza.') || lowerUrl.includes('magazinevoce.')) return 'Magalu';
     if (lowerUrl.includes('hotmart.')) return 'Hotmart';
     if (lowerUrl.includes('kiwify.')) return 'Kiwify';
     return 'Outra';
@@ -211,7 +211,7 @@ const ImportOfferModal: React.FC<ImportOfferModalProps> = ({ isOpen, onClose, on
               apiResult.title.toLowerCase().includes('acesso negado')
             );
             
-            const isInvalidScrape = !apiResult || !apiResult.success || hasErrorTitle || !apiResult.sale_price;
+            const isInvalidScrape = !apiResult || !apiResult.success || hasErrorTitle;
 
             if (apiResult && apiResult.success && !isInvalidScrape) {
               setIsFallback(false);

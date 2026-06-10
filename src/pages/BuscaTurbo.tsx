@@ -258,7 +258,7 @@ const BuscaTurbo: React.FC = () => {
         
         <div className="relative p-6 space-y-6">
           {/* Platforms Grid */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-muted-foreground flex items-center gap-2">
                 <Globe className="w-4 h-4" /> Selecione os motores busca de sua preferência
@@ -267,32 +267,62 @@ const BuscaTurbo: React.FC = () => {
                 {selectedPlatforms.length} Selecionados
               </span>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-10 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-3 bg-background/20 p-4 rounded-2xl border border-border/40">
               {SEARCH_PLATFORMS.map((p) => (
-                <button
+                <label
                   key={p.id}
-                  onClick={() => togglePlatform(p.id)}
-                  className={`
-                    relative flex flex-col items-center justify-center p-2 rounded-xl border
-                    ${selectedPlatforms.includes(p.id) 
-                      ? 'bg-primary/10 border-primary shadow-sm' 
-                      : 'bg-background/40 border-border hover:border-primary/30'}
-                  `}
-                  title={p.name}
+                  className="flex items-center gap-2.5 cursor-pointer text-xs text-foreground select-none py-1"
                 >
-                  <p.icon 
-                    className="w-4 h-4" 
-                    style={{ color: selectedPlatforms.includes(p.id) ? p.color : 'inherit' }}
+                  <input
+                    type="checkbox"
+                    checked={selectedPlatforms.includes(p.id)}
+                    onChange={() => togglePlatform(p.id)}
+                    className="w-4 h-4 rounded border-emerald-500 text-emerald-600 bg-background focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer"
                   />
-                  <span className="text-[9px] mt-1.5 font-bold truncate w-full text-center opacity-70 group-hover:opacity-100">
+                  <p.icon 
+                    className="w-4 h-4 shrink-0" 
+                    style={{ color: p.color }}
+                  />
+                  <span className="font-medium text-muted-foreground hover:text-foreground transition-colors truncate">
                     {p.name}
                   </span>
-                  {selectedPlatforms.includes(p.id) && (
-                    <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5 flex items-center justify-center border border-background shadow-xs">
-                      <Check className="w-2.5 h-2.5" />
-                    </div>
-                  )}
-                </button>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="h-px bg-border/60 my-4" />
+
+          {/* OSINT Operators Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-muted-foreground flex items-center gap-2">
+                <Filter className="w-4 h-4" /> Selecione os Operadores OSINT
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-3 bg-background/20 p-4 rounded-2xl border border-border/40">
+              {ADVANCED_OPERATORS.map((op) => (
+                <label
+                  key={op.operator}
+                  className="flex items-center gap-2.5 cursor-pointer text-xs text-foreground select-none py-1"
+                >
+                  <input
+                    type="checkbox"
+                    checked={query.includes(op.operator)}
+                    onChange={() => {
+                      if (query.includes(op.operator)) {
+                        setQuery(prev => prev.replace(op.operator, '').replace(/\s+/g, ' ').trim());
+                      } else {
+                        setQuery(prev => `${prev} ${op.operator}`.trim());
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-emerald-500 text-emerald-600 bg-background focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer"
+                  />
+                  <code className="text-primary font-black text-xs shrink-0">{op.operator}</code>
+                  <span className="text-[11px] text-muted-foreground font-medium uppercase truncate">
+                    {op.description}
+                  </span>
+                </label>
               ))}
             </div>
           </div>
@@ -468,82 +498,53 @@ const BuscaTurbo: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Shortcuts Section */}
-        <div className="lg:col-span-2 space-y-4">
+      {/* Shortcuts Section */}
+      <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur-xl relative overflow-hidden">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold flex items-center gap-2">
-              <Command className="w-5 h-5 text-primary" /> Selecione Atalhos Inteligentes.
+              <Command className="w-5 h-5 text-primary" /> Selecione Atalhos Inteligentes
             </h3>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {QUICK_SHORTCUTS.map((s) => (
-              <button
-                key={s.name}
-                onClick={() => applyShortcut(s.query)}
-                className="flex flex-col items-start p-5 rounded-3xl bg-card border border-white/5 hover:border-primary/30 hover:bg-primary/5 transition-all group"
-              >
-                <s.icon className="w-6 h-6 text-muted-foreground group-hover:text-primary mb-4 transition-colors" />
-                <h4 className="font-bold text-sm">{s.name}</h4>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Operators Sidebar */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2">
-            <Filter className="w-5 h-5 text-primary" /> Selecione o Operadores OSINT
-          </h3>
-          <Card className="p-4 bg-muted/20 border-primary/20 space-y-2">
-            {ADVANCED_OPERATORS.map((op) => (
-              <div 
-                key={op.operator} 
-                className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 cursor-help group"
-                onClick={() => applyShortcut(op.operator)}
-              >
-                <code className="text-primary font-black text-sm">{op.operator}</code>
-                <span className="text-[10px] text-muted-foreground font-bold uppercase">{op.description}</span>
-              </div>
-            ))}
-          </Card>
-          
-          <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-xl overflow-hidden relative">
-            <div className="absolute -right-4 -bottom-4 opacity-20 rotate-12">
-              <Zap className="w-32 h-32 fill-white" />
-            </div>
-            <h4 className="font-bold text-xl mb-2 relative z-10">Histórico de Busca</h4>
-            <div className="space-y-3 relative z-10">
-              {isLoadingHistory ? (
-                <div className="flex justify-center p-4">
-                  <Cpu className="w-6 h-6 animate-spin opacity-50" />
-                </div>
-              ) : searchHistory.length > 0 ? (
-                searchHistory.map((h) => (
-                  <div 
-                    key={h.id} 
-                    className="flex flex-col text-xs py-2 border-b border-white/10 last:border-0 hover:bg-white/5 cursor-pointer rounded-lg px-2 transition-colors"
-                    onClick={() => setQuery(h.query)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="truncate max-w-[140px] font-bold">{h.query}</span>
-                      <span className="opacity-60 text-[10px]">{new Date(h.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
-                    </div>
-                    <div className="flex gap-1 mt-1">
-                      {h.platforms.slice(0, 3).map(p => (
-                        <span key={p} className="text-[8px] uppercase font-black opacity-40">{p}</span>
-                      ))}
-                      {h.platforms.length > 3 && <span className="text-[8px] opacity-40">+{h.platforms.length - 3}</span>}
-                    </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {QUICK_SHORTCUTS.map((s) => {
+              const active = query.includes(s.query);
+              return (
+                <button
+                  key={s.name}
+                  type="button"
+                  onClick={() => {
+                    if (active) {
+                      setQuery(prev => prev.replace(s.query, '').replace(/\s+/g, ' ').trim());
+                    } else {
+                      setQuery(prev => `${prev} ${s.query}`.trim());
+                    }
+                  }}
+                  className={`flex items-center gap-3 p-4 rounded-2xl bg-background border transition-all relative text-left group cursor-pointer ${
+                    active 
+                      ? 'border-emerald-500 bg-emerald-500/10' 
+                      : 'border-white/5 hover:border-primary/30 hover:bg-primary/5'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    active ? 'bg-emerald-500/25 text-emerald-500' : 'bg-muted/50 text-muted-foreground group-hover:text-primary'
+                  }`}>
+                    <s.icon className="w-4 h-4" />
                   </div>
-                ))
-              ) : (
-                <p className="text-sm opacity-60 italic">Nenhuma busca recente.</p>
-              )}
-            </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className={`font-bold text-xs truncate ${active ? 'text-emerald-500' : 'text-foreground'}`}>{s.name}</h4>
+                  </div>
+                  {active && (
+                    <div className="absolute top-2 right-2 bg-emerald-500 text-white rounded-full p-0.5 flex items-center justify-center shadow-xs">
+                      <Check className="w-2.5 h-2.5 text-white stroke-[3px]" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

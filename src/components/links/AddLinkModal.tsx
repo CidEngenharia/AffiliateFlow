@@ -81,12 +81,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
   const [isCompressing, setIsCompressing] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   
-  // Regras de Dispositivo
-  const [deviceRules, setDeviceRules] = useState({
-    mobile: '',
-    tablet: '',
-    desktop: ''
-  });
+  // Regras de País
 
   // Regras de País
   const [countryRulesList, setCountryRulesList] = useState<Array<{ country: string; url: string }>>([]);
@@ -114,7 +109,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
     const lowerUrl = url.toLowerCase();
     if (lowerUrl.includes('amazon.')) return 'Amazon';
     if (lowerUrl.includes('shopee.')) return 'Shopee';
-    if (lowerUrl.includes('magalu.') || lowerUrl.includes('magazineluiza.')) return 'Magalu';
+    if (lowerUrl.includes('magalu.') || lowerUrl.includes('magazineluiza.') || lowerUrl.includes('magazinevoce.')) return 'Magalu';
     if (lowerUrl.includes('hotmart.')) return 'Hotmart';
     if (lowerUrl.includes('kiwify.')) return 'Kiwify';
     return 'Outra';
@@ -132,12 +127,11 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
       .substring(0, 18);               // Limitar tamanho
   };
 
-  // Aplica fallback em caso de falha do scraper
   const applyFallbackScrape = (targetUrl: string) => {
     const platform = detectPlatform(targetUrl);
     let title = `Oferta Imperdivel - ${platform}`;
-    let originalPrice = '199.90';
-    let salePrice = '149.90';
+    let originalPrice = '';
+    let salePrice = '';
     let tags = `${platform.toLowerCase().replace(' ', '')}, oferta, importado`;
 
     try {
@@ -196,7 +190,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
         data.title.toLowerCase().includes('acesso negado')
       );
       
-      const isInvalidScrape = !data.success || hasErrorTitle || !data.sale_price;
+      const isInvalidScrape = !data.success || hasErrorTitle;
 
       if (data.success && !isInvalidScrape) {
         setFormData(prev => ({
@@ -257,14 +251,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
         } else {
           setUploadedImages([]);
         }
-        // Restaurar regras de dispositivo
-        if (linkToEdit.device_rules) {
-          setDeviceRules({
-            mobile: linkToEdit.device_rules.mobile || '',
-            tablet: linkToEdit.device_rules.tablet || '',
-            desktop: linkToEdit.device_rules.desktop || '',
-          });
-        }
+        // Restaurar regras de país
         // Restaurar regras de país
         if (linkToEdit.country_rules) {
           setCountryRulesList(
@@ -300,7 +287,6 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
           is_active: true
         });
         setUploadedImages([]);
-        setDeviceRules({ mobile: '', tablet: '', desktop: '' });
         setCountryRulesList([]);
         setLanguageRulesList([]);
         setAbTestRulesList([]);
@@ -325,11 +311,6 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const finalDeviceRules: Record<string, string> = {};
-      if (deviceRules.mobile) finalDeviceRules.mobile = deviceRules.mobile;
-      if (deviceRules.tablet) finalDeviceRules.tablet = deviceRules.tablet;
-      if (deviceRules.desktop) finalDeviceRules.desktop = deviceRules.desktop;
-
       const finalCountryRules: Record<string, string> = {};
       countryRulesList.forEach(r => {
         if (r.country && r.url) finalCountryRules[r.country.toUpperCase()] = r.url;
@@ -371,7 +352,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
         sale_price: formData.sale_price ? parseFloat(formData.sale_price) : null,
         platform: platformToSave,
         redirect_type: formData.redirect_type as '301' | '307',
-        device_rules: Object.keys(finalDeviceRules).length > 0 ? finalDeviceRules : null,
+        device_rules: null,
         country_rules: Object.keys(finalCountryRules).length > 0 ? finalCountryRules : null,
         language_rules: Object.keys(finalLanguageRules).length > 0 ? finalLanguageRules : null,
         ab_test_rules: finalAbTestRules.length > 0 ? finalAbTestRules : null
@@ -718,46 +699,9 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
                     exit={{ opacity: 0, height: 0 }}
                     className="space-y-6 pt-2 border-t border-border"
                   >
-                    {/* Regras por Dispositivo */}
-                    <div className="space-y-3">
-                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">1. Roteamento por Dispositivo (Opcional)</span>
-                      <div className="space-y-3 p-4 bg-background border border-border rounded-xl">
-                        <div className="space-y-1">
-                          <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">URL para Celular (Mobile)</label>
-                          <input
-                            type="url"
-                            placeholder="https://exemplo.com/mobile"
-                            className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs outline-hidden text-foreground"
-                            value={deviceRules.mobile}
-                            onChange={e => setDeviceRules({ ...deviceRules, mobile: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">URL para Tablet</label>
-                          <input
-                            type="url"
-                            placeholder="https://exemplo.com/tablet"
-                            className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs outline-hidden text-foreground"
-                            value={deviceRules.tablet}
-                            onChange={e => setDeviceRules({ ...deviceRules, tablet: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[9px] text-muted-foreground font-bold uppercase ml-0.5">URL para Computador (Desktop)</label>
-                          <input
-                            type="url"
-                            placeholder="https://exemplo.com/desktop"
-                            className="w-full bg-background border border-border rounded-lg h-9 px-3 text-xs outline-hidden text-foreground"
-                            value={deviceRules.desktop}
-                            onChange={e => setDeviceRules({ ...deviceRules, desktop: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Regras por País */}
                     <div className="space-y-3">
-                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">2. Roteamento por País (Opcional)</span>
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">1. Roteamento por País (Opcional)</span>
                       <div className="space-y-3 p-4 bg-background border border-border rounded-xl">
                         <div className="grid grid-cols-3 gap-2 items-end">
                           <div className="space-y-1 col-span-1">
@@ -820,7 +764,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
 
                     {/* Regras por Idioma */}
                     <div className="space-y-3">
-                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">3. Roteamento por Idioma (Opcional)</span>
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">2. Roteamento por Idioma (Opcional)</span>
                       <div className="space-y-3 p-4 bg-background border border-border rounded-xl">
                         <div className="grid grid-cols-3 gap-2 items-end">
                           <div className="space-y-1 col-span-1">
@@ -883,7 +827,7 @@ const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAdd, lin
 
                     {/* Testes A/B */}
                     <div className="space-y-3">
-                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">4. Configuração de Teste A/B (Opcional)</span>
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">3. Configuração de Teste A/B (Opcional)</span>
                       <div className="space-y-3 p-4 bg-background border border-border rounded-xl">
                         <div className="grid grid-cols-4 gap-2 items-end">
                           <div className="space-y-1 col-span-3">

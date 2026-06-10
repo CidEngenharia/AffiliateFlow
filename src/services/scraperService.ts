@@ -22,7 +22,7 @@ function detectPlatform(url: string): string {
   const lowerUrl = url.toLowerCase();
   if (lowerUrl.includes('amazon.')) return 'Amazon';
   if (lowerUrl.includes('shopee.')) return 'Shopee';
-  if (lowerUrl.includes('magalu.') || lowerUrl.includes('magazineluiza.')) return 'Magalu';
+  if (lowerUrl.includes('magalu.') || lowerUrl.includes('magazineluiza.') || lowerUrl.includes('magazinevoce.')) return 'Magalu';
   if (lowerUrl.includes('hotmart.')) return 'Hotmart';
   if (lowerUrl.includes('kiwify.')) return 'Kiwify';
   return 'Outra';
@@ -113,8 +113,19 @@ function extractTitle(doc: Document, platform: string): string {
         }
       }
     } else if (platform === 'Magalu') {
-      const el = doc.querySelector('h1.header-product__title, h1[class*="Title"], h1');
-      if (el) title = el.textContent?.trim() || '';
+      const titleSelectors = [
+        'h1.header-product__title',
+        'h1[class*="Title"]',
+        'h1[data-testid="product-title"]',
+        'h1'
+      ];
+      for (const sel of titleSelectors) {
+        const el = doc.querySelector(sel);
+        if (el && el.textContent?.trim()) {
+          title = el.textContent.trim();
+          break;
+        }
+      }
     }
   }
 
@@ -219,7 +230,7 @@ function extractImage(doc: Document, platform: string): string {
       }
     } else if (platform === 'Magalu') {
       const el = doc.querySelector<HTMLImageElement>(
-        'img[class*="ProductImage"], img[class*="product-image"], picture img'
+        'img[class*="ProductImage"], img[class*="product-image"], picture img, img[data-testid="image-selected"], [class*="image-selected"] img'
       );
       if (el) imageUrl = el.getAttribute('src') || '';
     }
@@ -318,8 +329,22 @@ function extractPrices(
         }
       }
     } else if (platform === 'Magalu') {
-      const el = doc.querySelector('[class*="Price__Value"], [class*="price__value"], [data-testid="price-value"]');
-      if (el) salePriceStr = el.textContent || '';
+      const saleSelectors = [
+        '[class*="Price__Value"]',
+        '[class*="price__value"]',
+        '[data-testid="price-value"]',
+        '.u-price',
+        'span[class*="price"]',
+        'p[class*="price"]',
+        '[class*="current-price"]'
+      ];
+      for (const sel of saleSelectors) {
+        const el = doc.querySelector(sel);
+        if (el && /[0-9]/.test(el.textContent || '')) {
+          salePriceStr = el.textContent || '';
+          break;
+        }
+      }
     }
   }
 
