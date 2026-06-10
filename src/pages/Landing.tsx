@@ -221,25 +221,33 @@ const Landing: React.FC = () => {
               transition={{ duration: 1.2, delay: 0.2 }}
               className="mt-32 relative max-w-6xl mx-auto"
             >
-              <div className="absolute -inset-4 bg-blue-500/20 blur-[120px] opacity-30 rounded-full" />
-              <div className="relative rounded-[2.5rem] border border-white/10 bg-slate-900/30 backdrop-blur-3xl p-3 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden">
-                <div className="absolute inset-0 bg-linear-to-tr from-blue-500/5 via-transparent to-purple-500/5" />
-                <div className="aspect-video rounded-[2rem] overflow-hidden border border-white/5 bg-[#020617] relative group">
-                  <img 
-                    src="/images/dashboard-mockup.png" 
-                    alt="Affilehub Dashboard" 
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-1000"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop';
-                    }}
-                  />
-                  {/* Floating Elements */}
-                  <div className="absolute top-8 left-8 p-4 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl animate-bounce">
-                    <TrendingUp className="w-6 h-6 text-green-400" />
+              <div className="absolute -inset-4 bg-violet-500/20 blur-[120px] opacity-35 rounded-full" />
+              <div className="relative rounded-[2.5rem] border border-violet-500/30 bg-slate-900/30 backdrop-blur-3xl p-3 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden">
+                <div className="absolute inset-0 bg-linear-to-tr from-violet-500/5 via-transparent to-purple-500/5" />
+                <div className="aspect-video rounded-[2rem] overflow-hidden border border-white/5 bg-[#020617] relative group flex items-center justify-center">
+                  
+                  {/* Imagem do Robô Flutuando */}
+                  <motion.div 
+                    animate={{ y: [-10, 10, -10] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                    className="w-full h-full"
+                  >
+                    <img 
+                      src="/images/landing-ai.jpg" 
+                      alt="IA automatizando vendas para afiliados" 
+                      className="w-full h-full object-cover opacity-80 group-hover:opacity-95 transition-opacity duration-1000"
+                    />
+                  </motion.div>
+
+                  {/* Floating Elements (Badge e descrição) */}
+                  <div className="absolute top-8 left-8 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/15 backdrop-blur-md shadow-2xl">
+                    <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                    <span className="text-[10px] font-black text-violet-400 uppercase tracking-[0.3em]">automatize seus ganhos</span>
                   </div>
-                  <div className="absolute bottom-12 right-12 p-6 rounded-3xl bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 shadow-2xl">
-                    <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Taxa de Conversão</div>
-                    <div className="text-3xl font-black text-white">24.8%</div>
+
+                  <div className="absolute bottom-12 right-12 p-6 rounded-3xl bg-violet-600/20 backdrop-blur-xl border border-violet-500/30 shadow-2xl text-left max-w-xs">
+                    <div className="text-[10px] font-black text-violet-400 uppercase tracking-widest mb-1">Vitrine Inteligente</div>
+                    <div className="text-xl font-bold text-white leading-tight">Deixe que a IA venda por você 24/7.</div>
                   </div>
                 </div>
               </div>
@@ -514,25 +522,25 @@ const Landing: React.FC = () => {
 
                   {/* Badge */}
                   <div className="inline-flex w-fit items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/15">
-                    <Sparkles className="w-3 h-3 text-violet-400" />
-                    <span className="text-[10px] font-black text-violet-400 uppercase tracking-[0.3em]">automatize seus ganhos</span>
+                    <MousePointer2 className="w-3 h-3 text-violet-400" />
+                    <span className="text-[10px] font-black text-violet-400 uppercase tracking-[0.3em]">Mobile First</span>
                   </div>
 
                   {/* Título degradê branco → lilás */}
                   <h2 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight">
-                    <span className="text-white">Deixe que a IA</span>{' '}
+                    <span className="text-white">Controle total</span>{' '}
                     <span style={{
                       background: 'linear-gradient(90deg, #e9d5ff 0%, #c084fc 55%, #a855f7 100%)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                     }}>
-                      venda por você 24/7.
+                      na palma da mão
                     </span>
                   </h2>
 
                   {/* Descrição */}
                   <p className="text-sm md:text-lg text-slate-400 leading-relaxed max-w-md">
-                    Monitore comissões, gerencie links e automatize seus disparos em massa tudo através da nossa tecnologia de inteligência artificial.
+                    Monitore comissões, gere links e acompanhe campanhas em tempo real — direto do celular ou tablet.
                   </p>
 
                   {/* Bullets compactos */}
@@ -576,9 +584,9 @@ const Landing: React.FC = () => {
                     className="w-full max-w-[500px]"
                   >
                     <img
-                      src="/images/landing-ai.jpg"
-                      alt="IA automatizando vendas para afiliados"
-                      className="w-full h-auto rounded-2xl object-contain drop-shadow-[0_20px_50px_rgba(168,85,247,0.15)]"
+                      src="/black_.png"
+                      alt="Afiliado controlando dashboard pelo tablet"
+                      className="w-full h-auto object-contain drop-shadow-[0_20px_50px_rgba(168,85,247,0.15)]"
                     />
                   </motion.div>
                 </div>
